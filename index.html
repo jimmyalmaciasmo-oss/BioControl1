@@ -18,7 +18,7 @@
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}th{color:#64748b;font-size:11px;text-transform:uppercase}.pill{display:inline-block;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}.ok{background:#dcfce7;color:#166534}.warn{background:#fef3c7;color:#92400e}.bad{background:#fee2e2;color:#991b1b}
 .modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:20;align-items:center;justify-content:center;padding:15px}.modal.show{display:flex}.modalbox{background:#fff;width:min(700px,100%);max-height:90vh;overflow:auto;border-radius:18px;padding:22px}.modalhead{display:flex;justify-content:space-between;align-items:center}.modalhead h2{margin:0}.muted{color:var(--muted);font-size:13px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap}.tag{display:inline-block;padding:6px 10px;border-radius:8px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:800}.doc{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:11px;margin:8px 0;flex-wrap:wrap}.photo{border:1px solid var(--line);border-radius:12px;padding:10px}.photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.photos img{width:100%;height:150px;object-fit:cover;border-radius:9px}
 @media(max-width:800px){.side{width:100%;height:auto;position:static;border-right:0;border-bottom:1px solid var(--line);padding:10px}.app{display:block}.main{margin:0;width:100%;padding:16px}.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}.nav button{font-size:11px;padding:9px}.brand{padding:7px 10px}.top h1{font-size:22px}}
-</style>
+.hero h2,.hero h3{margin:7px 0}.small{font-size:12px;color:#64748b}</style>
 </head>
 <body>
 <div class="app">
@@ -26,11 +26,15 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
 <div class="brand">🩺 BioControl<small>Gestión de equipos biomédicos</small></div>
 <nav class="nav">
 <button data-s="dashboard" class="active">📊 Dashboard</button>
+<button data-s="equipos">🏥 Equipos</button>
 <button data-s="hoja">📋 Hoja de vida</button>
 <button data-s="mantenimiento">🔧 Mantenimiento</button>
 <button data-s="ciclos">♻️ Ciclos</button>
 <button data-s="componentes">⚙️ Componentes</button>
 <button data-s="documentos">📁 Documentos</button>
+<button data-s="alertas">🔔 Alertas</button>
+<button data-s="informes">📄 Informes</button>
+<button data-s="admin">🔐 Administrar</button>
 </nav>
 </aside>
 <main class="main">
@@ -47,38 +51,53 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
 <div class="notice">💡 Usa el menú para consultar la hoja de vida, registrar mantenimientos, ciclos, componentes y documentos.</div></div>
 </section>
 
-<section id="hoja" class="section">
-<div id="qrOpened" class="notice" style="display:none">🔲 <strong>Ficha abierta mediante QR.</strong> Estás en la <strong>Hoja de vida</strong> del equipo.</div>
-<div class="card hero"><div><span class="tag">AUT-001</span><h2>Autoclave Gnatus Bioclave 12L</h2><p class="muted">Equipo principal de BioControl</p></div>
-<button class="btn" onclick="showQR()">🔲 Ver / generar QR</button></div>
-<div class="card"><h2>Identificación técnica</h2><div class="grid">
-<div class="kpi"><span>Marca</span><strong>Gnatus</strong></div><div class="kpi"><span>Modelo</span><strong>Bioclave 12L</strong></div>
-<div class="kpi"><span>Número de serie</span><strong>500003402932</strong></div><div class="kpi"><span>Potencia</span><strong>1600 VA</strong></div>
-<div class="kpi"><span>Instalación</span><strong>06/04/2025</strong></div><div class="kpi"><span>Responsable</span><strong>Francy Cuellar</strong></div>
-</div></div>
-<div class="card"><h2>Estado y mantenimiento</h2><div class="grid">
-<div><span class="pill ok">OPERATIVO</span><p class="muted">Equipo disponible para servicio.</p></div>
-<div><strong>Próximo mantenimiento</strong><p id="hojaNext">Pendiente de registrar</p></div>
-<div><strong>Ubicación / área</strong><p>Por completar</p></div>
-</div></div>
+
+<section id="equipos" class="section">
+<div class="card"><div class="hero"><div><h2>🏥 Equipos</h2><p class="muted">Agrega, edita y consulta todos los equipos biomédicos.</p></div><button class="btn" onclick="openEquipForm()">➕ Agregar equipo</button></div></div>
+<div id="equipmentCards" class="grid"></div>
 </section>
 
-<section id="mantenimiento" class="section">
-<div class="card"><h2>🔧 Mantenimiento</h2><div class="form">
+<section id="hoja" class="section">
+<div id="qrOpened" class="notice" style="display:none">🔲 <strong>Ficha abierta mediante QR.</strong> Estás en la <strong>Hoja de vida</strong> del equipo.</div>
+<div class="card hero"><div><span class="tag" id="hojaCode">AUT-001</span><h2 id="hojaName">Autoclave Gnatus Bioclave 12L</h2><p class="muted">Ficha editable del equipo</p></div>
+<div class="actions"><button class="btn" onclick="openEquipForm(currentEquipmentId)">✏️ Editar equipo</button><button class="btn secondary" onclick="showQR()">🔲 Ver / generar QR</button></div></div>
+<div class="card"><h2>Identificación técnica</h2><div class="grid">
+<div class="kpi"><span>Marca</span><strong id="hojaBrand">Gnatus</strong></div><div class="kpi"><span>Modelo</span><strong id="hojaModel">Bioclave 12L</strong></div>
+<div class="kpi"><span>Número de serie</span><strong id="hojaSerial">500003402932</strong></div><div class="kpi"><span>Potencia</span><strong id="hojaPower">1600 VA</strong></div>
+<div class="kpi"><span>Instalación</span><strong id="hojaInstall">06/04/2025</strong></div><div class="kpi"><span>Responsable</span><strong id="hojaResponsible">Francy Cuellar</strong></div>
+</div></div>
+<div class="card"><h2>Estado y mantenimiento</h2><div class="grid">
+<div><span id="hojaStatus" class="pill ok">OPERATIVO</span><p class="muted">Estado actual del equipo.</p></div>
+<div><strong>Próximo mantenimiento</strong><p id="hojaNext">Pendiente de registrar</p></div>
+<div><strong>Ubicación / área</strong><p id="hojaLocation">Por completar</p></div>
+</div></div>
+<div class="card"><h2>📸 Fotografías del equipo</h2><div id="hojaPhotos" class="photos"><p class="muted">Sin fotografías.</p></div></div>
+</section>
+
+<section id="mantenimiento class="section">
+<div class="card"><h2>🔧 Mantenimiento <span class="tag" id="mtCurrentEquip">AUT-001</span></h2><div class="form">
 <div><label>TIPO</label><select id="mtType"><option>Preventivo</option><option>Correctivo</option></select></div>
 <div><label>FECHA</label><input id="mtDate" type="date"></div>
 <div><label>PRÓXIMA FECHA</label><input id="mtNext" type="date"></div>
 <div><label>TÉCNICO / RESPONSABLE</label><input id="mtTech" placeholder="Nombre"></div>
+<div><label>HORÓMETRO / CICLOS</label><input id="mtMeter" placeholder="Opcional"></div>
+<div><label>COSTO</label><input id="mtCost" type="number" min="0" step="0.01" placeholder="Opcional"></div>
 <div style="grid-column:1/-1"><label>OBSERVACIONES</label><textarea id="mtObs" placeholder="Trabajo realizado, pruebas y recomendaciones"></textarea></div>
-</div><div class="actions"><button class="btn" onclick="addMaintenance()">💾 Guardar mantenimiento</button></div></div>
+<div style="grid-column:1/-1"><label>EVIDENCIA FOTOGRÁFICA</label>
+<input id="mtPhotos" type="file" accept="image/*" multiple>
+<div class="muted">Puedes seleccionar varias fotos. Se guardarán junto al registro y podrás abrirlas después.</div>
+<div id="mtPhotoPreview" class="photos" style="margin-top:10px"></div></div>
+</div><div class="actions"><button class="btn" onclick="addMaintenance()">💾 Guardar mantenimiento con evidencia</button></div></div>
 <div class="card"><h2>Historial</h2><div id="mtList">Aún no hay mantenimientos registrados.</div></div>
 </section>
 
 <section id="ciclos" class="section">
-<div class="card"><h2>♻️ Ciclos de esterilización</h2><div class="form">
+<div class="card"><h2>♻️ Ciclos de esterilización <span class="tag" id="cyCurrentEquip">AUT-001</span></h2><div class="form">
 <div><label>FECHA</label><input id="cyDate" type="date"></div><div><label>PROGRAMA</label><input id="cyProgram" placeholder="Ej. 121 °C"></div>
 <div><label>RESULTADO</label><select id="cyResult"><option>Exitoso</option><option>Fallido</option><option>Repetir</option></select></div>
 <div><label>RESPONSABLE</label><input id="cyTech" placeholder="Nombre"></div>
+<div style="grid-column:1/-1"><label>EVIDENCIA / SOPORTE</label><input id="cyPhotos" type="file" accept="image/*" multiple>
+<div class="muted">Opcional: fotos del ciclo, indicador o resultado.</div><div id="cyPhotoPreview" class="photos" style="margin-top:10px"></div></div>
 </div><div class="actions"><button class="btn" onclick="addCycle()">💾 Registrar ciclo</button></div></div>
 <div class="card"><h2>Historial de ciclos</h2><div id="cyList">No hay ciclos registrados.</div></div>
 </section>
@@ -93,6 +112,35 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
 </tbody></table></div>
 </section>
 
+
+
+<section id="alertas" class="section">
+<div class="card"><div class="hero"><div><h2>🔔 Alertas y semáforo</h2><p class="muted">Control automático de vencimientos de mantenimiento.</p></div><button class="btn secondary" onclick="renderAlerts()">🔄 Actualizar</button></div></div>
+<div id="alertSummary" class="grid"></div><div class="card"><h2>Estado de todos los equipos</h2><div id="alertList"></div></div>
+</section>
+
+<section id="informes" class="section">
+<div class="card"><h2>📄 Informes</h2><p class="muted">Genera una vista imprimible de la hoja de vida, mantenimientos, ciclos, documentos y evidencia del equipo seleccionado.</p>
+<div class="form"><div><label>EQUIPO</label><select id="reportEquipment"></select></div></div>
+<div class="actions"><button class="btn" onclick="generateReport()">🖨️ Generar / imprimir informe</button></div></div>
+</section>
+
+<section id="admin" class="section">
+<div class="card">
+<h2>🔐 Administración</h2>
+<div id="loginBox">
+<p>Entra al modo administrador para modificar equipos, fechas, series, ubicación y demás datos.</p>
+<div class="form"><div><label>CLAVE DE ADMINISTRADOR</label><input id="adminPass" type="password" placeholder="Clave"></div></div>
+<div class="actions"><button class="btn" onclick="loginAdmin()">🔓 Entrar</button></div>
+<p class="muted">Clave inicial para el proyecto académico: <strong>BioControl2026</strong>. Puedes cambiarla desde esta misma pantalla.</p>
+</div>
+<div id="adminPanel" style="display:none">
+<div class="notice">✅ Modo administrador activo en este navegador.</div>
+<div class="actions"><button class="btn secondary" onclick="openEquipForm()">➕ Agregar equipo</button><button class="btn secondary" onclick="changeAdminPassword()">🔑 Cambiar clave</button><button class="btn secondary" onclick="exportBackup()">💾 Exportar respaldo</button><button class="btn secondary" onclick="importBackup()">📥 Importar respaldo</button><button class="btn danger" onclick="logoutAdmin()">🔒 Cerrar sesión</button></div>
+</div>
+</div>
+</section>
+
 <section id="documentos" class="section">
 <div class="card"><h2>📁 Documentos</h2><div class="notice">Los archivos que agregues quedan guardados en este navegador mediante almacenamiento local.</div>
 <div class="form"><div><label>NOMBRE</label><input id="docName" placeholder="Ej. Certificado de mantenimiento"></div><div><label>ARCHIVO</label><input id="docFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"></div></div>
@@ -101,6 +149,30 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
 <div class="card"><h2>📖 Manual del equipo</h2><div class="doc"><div><strong>Manual Gnatus Bioclave 12L</strong><div class="muted">Documento de referencia</div></div><a class="btn secondary" href="./Manual_Gnatus_Bioclave_12L.pdf" target="_blank">📖 Abrir manual</a></div></div>
 </section>
 </main></div>
+
+
+<div id="equipModal" class="modal"><div class="modalbox">
+<div class="modalhead"><h2 id="equipModalTitle">➕ Agregar equipo</h2><button class="btn secondary" onclick="closeEquipForm()">Cerrar</button></div>
+<div class="form">
+<div><label>CÓDIGO</label><input id="efCode" placeholder="Ej. AUT-002"></div>
+<div><label>NOMBRE DEL EQUIPO</label><input id="efName" placeholder="Ej. Monitor de signos vitales"></div>
+<div><label>MARCA</label><input id="efBrand"></div>
+<div><label>MODELO</label><input id="efModel"></div>
+<div><label>NÚMERO DE SERIE</label><input id="efSerial"></div>
+<div><label>POTENCIA / ESPECIFICACIÓN</label><input id="efPower"></div>
+<div><label>FECHA DE INSTALACIÓN</label><input id="efInstall" type="date"></div>
+<div><label>RESPONSABLE</label><input id="efResponsible"></div>
+<div><label>PRÓXIMO MANTENIMIENTO</label><input id="efNext" type="date"></div>
+<div><label>FECHA ÚLTIMO MANTENIMIENTO</label><input id="efLast" type="date"></div>
+<div><label>UBICACIÓN / ÁREA</label><input id="efLocation" placeholder="Ej. Consultorio 1"></div>
+<div><label>ESTADO</label><select id="efStatus"><option>Operativo</option><option>En mantenimiento</option><option>Fuera de servicio</option></select></div>
+<div><label>FABRICANTE / PROVEEDOR</label><input id="efProvider"></div>
+<div style="grid-column:1/-1"><label>FOTOGRAFÍAS DEL EQUIPO</label><input id="efPhotos" type="file" accept="image/*" multiple>
+<div class="muted">Fotos generales del equipo, placa, instalación, etc.</div><div id="efPhotoPreview" class="photos" style="margin-top:10px"></div></div>
+<div style="grid-column:1/-1"><label>OBSERVACIONES</label><textarea id="efObs"></textarea></div>
+</div>
+<div class="actions"><button class="btn" onclick="saveEquipment()">💾 Guardar equipo</button><button class="btn secondary" onclick="closeEquipForm()">Cancelar</button></div>
+</div></div>
 
 <div id="qrModal" class="modal"><div class="modalbox">
 <div class="modalhead"><h2>🔲 QR — Hoja de vida</h2><button class="btn secondary" onclick="closeQR()">Cerrar</button></div>
@@ -112,25 +184,161 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;bor
 </div></div>
 
 <script>
-const titles={dashboard:'Dashboard',hoja:'Hoja de vida',mantenimiento:'Mantenimiento',ciclos:'Ciclos de esterilización',componentes:'Componentes',documentos:'Documentos'};
+
+document.getElementById('mtPhotos')?.addEventListener('change',()=>previewFiles('mtPhotos','mtPhotoPreview'));
+document.getElementById('cyPhotos')?.addEventListener('change',()=>previewFiles('cyPhotos','cyPhotoPreview'));
+async function previewFiles(inputId, previewId){
+ const box=document.getElementById(previewId); if(!box)return; box.innerHTML='';
+ for(const f of Array.from(document.getElementById(inputId).files||[])){
+   const u=URL.createObjectURL(f);
+   box.innerHTML+=`<div class="photo"><img src="${u}" alt="${esc(f.name)}"><div class="muted">${esc(f.name)}</div></div>`;
+ }
+}
+async function filesToData(files){
+ const arr=[]; for(const f of Array.from(files||[])){arr.push({name:f.name,type:f.type,data:await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})});} return arr;
+}
+function openEvidence(items){
+ if(!items||!items.length){alert('Este registro no tiene evidencia fotográfica.');return}
+ const w=open('','_blank'); if(!w){alert('Permite ventanas emergentes para abrir la evidencia.');return}
+ w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Evidencia fotográfica — BioControl</title><style>body{font-family:Arial;padding:20px;background:#f4f7fb}h1{font-size:22px}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}.c{background:#fff;padding:12px;border-radius:12px;border:1px solid #ddd}.c img{width:100%;height:280px;object-fit:contain;background:#eee}.m{color:#64748b;font-size:12px;margin-top:6px}</style></head><body><h1>📸 Evidencia fotográfica — BioControl</h1><div class="g">');
+ items.forEach(x=>w.document.write('<div class="c"><img src="'+x.data+'" alt=""><div class="m">'+esc(x.name)+'</div></div>'));
+ w.document.write('</div></body></html>');w.document.close();
+}
+const titles={dashboard:'Dashboard',equipos:'Equipos',hoja:'Hoja de vida',mantenimiento:'Mantenimiento',ciclos:'Ciclos de esterilización',componentes:'Componentes',documentos:'Documentos',alertas:'Alertas',informes:'Informes',admin:'Administrar'};
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showSection(b.dataset.s));
-function showSection(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.s===id));document.getElementById('title').textContent=titles[id]||id;history.replaceState(null,'','#'+id);}
+function showSection(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.s===id));document.getElementById('title').textContent=titles[id]||id;if(id==='alertas')renderAlerts();if(id==='informes')renderReportSelect();history.replaceState(null,'','#'+id);}
 function publicQRUrl(){const u=new URL(location.href);u.hash='hoja';u.search='?equipo=AUT-001';return u.toString();}
 function showQR(){const url=publicQRUrl();document.getElementById('qrUrl').textContent=url;const box=document.getElementById('qrImage');box.innerHTML='';const img=document.createElement('img');img.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(url);img.alt='QR BioControl AUT-001';box.appendChild(img);document.getElementById('qrModal').classList.add('show');}
 function closeQR(){document.getElementById('qrModal').classList.remove('show');}
 function printQR(){const img=document.querySelector('#qrImage img');if(!img)return;const w=open('','_blank');w.document.write('<html><body style="font-family:Arial;text-align:center;padding:30px"><h1>BioControl</h1><h2>Autoclave Gnatus Bioclave 12L</h2><p>AUT-001 · Serie 500003402932</p><img src="'+img.src+'" style="width:300px"><p>Escanee para abrir Hoja de vida</p></body></html>');w.document.close();w.print();}
 let mt=JSON.parse(localStorage.getItem('bc_mt')||'[]'), cy=JSON.parse(localStorage.getItem('bc_cy')||'[]');
-function addMaintenance(){const o={type:mtType.value,date:mtDate.value,next:mtNext.value,tech:mtTech.value,obs:mtObs.value};if(!o.date){alert('Ingrese la fecha.');return}mt.push(o);localStorage.setItem('bc_mt',JSON.stringify(mt));renderMt();if(o.next){dashDate.textContent=o.next;hojaNext.textContent=o.next;}}
-function renderMt(){mtList.innerHTML=mt.length?mt.slice().reverse().map(o=>`<div class="doc"><div><strong>${esc(o.type)}</strong><div class="muted">${esc(o.date)} · ${esc(o.tech)}</div><div>${esc(o.obs)}</div></div><span class="pill ok">${o.next?'Próximo: '+esc(o.next):'Registrado'}</span></div>`).join(''):'Aún no hay mantenimientos registrados.'}
-function addCycle(){const o={date:cyDate.value,program:cyProgram.value,result:cyResult.value,tech:cyTech.value};if(!o.date){alert('Ingrese la fecha.');return}cy.push(o);localStorage.setItem('bc_cy',JSON.stringify(cy));renderCy();}
-function renderCy(){dashCycles.textContent=cy.length;cyList.innerHTML=cy.length?cy.slice().reverse().map(o=>`<div class="doc"><div><strong>${esc(o.program||'Ciclo')}</strong><div class="muted">${esc(o.date)} · ${esc(o.tech)}</div></div><span class="pill ${o.result==='Exitoso'?'ok':'bad'}">${esc(o.result)}</span></div>`).join(''):'No hay ciclos registrados.'}
+async function addMaintenance(){
+ const files=await filesToData(document.getElementById('mtPhotos')?.files||[]);
+ const o={equipmentId:currentEquipmentId,type:mtType.value,date:mtDate.value,next:mtNext.value,tech:mtTech.value,meter:mtMeter.value,cost:mtCost.value,obs:mtObs.value,photos:files};
+ if(!o.date){alert('Ingrese la fecha.');return}
+ mt.push(o);localStorage.setItem('bc_mt',JSON.stringify(mt));renderMt();
+ if(o.next){dashDate.textContent=o.next;hojaNext.textContent=o.next}
+ document.getElementById('mtPhotos').value='';document.getElementById('mtPhotoPreview').innerHTML='';
+ alert('Mantenimiento guardado correctamente.');
+}
+function renderMt(){
+ mtList.innerHTML=mt.length?mt.slice().reverse().map((o,i)=>`<div class="doc"><div><strong>${esc(o.type)}</strong><div class="muted">${esc(o.date)} · ${esc(o.tech||'Sin responsable')}</div><div>${esc(o.obs||'')}</div>${o.meter?'<div class="muted">Horómetro/ciclos: '+esc(o.meter)+'</div>':''}${o.cost?'<div class="muted">Costo: $'+esc(o.cost)+'</div>':''}</div><div class="actions"><span class="pill ok">${o.next?'Próximo: '+esc(o.next):'Registrado'}</span>${o.photos?.length?'<button class="btn secondary" onclick="openEvidence(mt['+(mt.length-1-i)+'].photos)">📸 Ver '+o.photos.length+' foto(s)</button>':''}</div></div>`).join(''):'Aún no hay mantenimientos registrados.'
+}
+async async function addCycle(){
+ const files=await filesToData(document.getElementById('cyPhotos')?.files||[]);
+ const o={equipmentId:currentEquipmentId,date:cyDate.value,program:cyProgram.value,result:cyResult.value,tech:cyTech.value,photos:files};
+ if(!o.date){alert('Ingrese la fecha.');return}
+ cy.push(o);localStorage.setItem('bc_cy',JSON.stringify(cy));renderCy();
+ document.getElementById('cyPhotos').value='';document.getElementById('cyPhotoPreview').innerHTML='';
+ alert('Ciclo registrado correctamente.');
+}
+function renderCy(){
+ dashCycles.textContent=cy.length;
+ cyList.innerHTML=cy.length?cy.slice().reverse().map((o,i)=>`<div class="doc"><div><strong>${esc(o.program||'Ciclo')}</strong><div class="muted">${esc(o.date)} · ${esc(o.tech||'Sin responsable')}</div></div><div class="actions"><span class="pill ${o.result==='Exitoso'?'ok':'bad'}">${esc(o.result)}</span>${o.photos?.length?'<button class="btn secondary" onclick="openEvidence(cy['+(cy.length-1-i)+'].photos)">📸 Ver '+o.photos.length+' foto(s)</button>':''}</div></div>`).join(''):'No hay ciclos registrados.'
+}
 const DB='bc_docs_final';
 function db(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=e=>e.target.result.createObjectStore('files',{keyPath:'id',autoIncrement:true});r.onsuccess=e=>res(e.target.result);r.onerror=()=>rej(r.error)})}
 async function addDoc(){const f=docFile.files[0],name=docName.value.trim()||f?.name;if(!f){alert('Seleccione un archivo.');return}const d=await db();const tx=d.transaction('files','readwrite');tx.objectStore('files').add({name,mime:f.type,blob:f,date:new Date().toISOString()});tx.oncomplete=()=>{docName.value='';docFile.value='';renderDocs()}}
 async function renderDocs(){const d=await db();const r=d.transaction('files','readonly').objectStore('files').getAll();r.onsuccess=()=>{docList.innerHTML=r.result.length?r.result.reverse().map(x=>`<div class="doc"><div><strong>${esc(x.name)}</strong><div class="muted">${new Date(x.date).toLocaleString('es-CO')}</div></div><button class="btn secondary" onclick="openDoc(${x.id})">📖 Abrir</button></div>`).join(''):'<p class="muted">No hay documentos adicionales cargados.</p>'}}
 async function openDoc(id){const d=await db();const r=d.transaction('files','readonly').objectStore('files').get(id);r.onsuccess=()=>{const u=URL.createObjectURL(r.result.blob);open(u,'_blank');setTimeout(()=>URL.revokeObjectURL(u),60000)}}
-function routeQR(){const p=new URLSearchParams(location.search);if(p.get('equipo')==='AUT-001'){showSection('hoja');document.getElementById('qrOpened').style.display='block';}}
-renderMt();renderCy();renderDocs();routeQR();
+function routeQR(){const p=new URLSearchParams(location.search);const id=p.get('equipo');if(id){const e=equipmentList.find(x=>x.id===id);if(e){currentEquipmentId=id;renderHoja();showSection('hoja');document.getElementById('qrOpened').style.display='block';}}}
+
+
+document.getElementById('efPhotos')?.addEventListener('change',()=>previewFiles('efPhotos','efPhotoPreview'));
+const EQUIP_KEY='bc_equipment_vfinal';
+const ADMIN_KEY='bc_admin_pass_vfinal';
+let currentEquipmentId='AUT-001', editingEquipmentId=null;
+let equipmentList=JSON.parse(localStorage.getItem(EQUIP_KEY)||'null')||[{
+ id:'AUT-001',name:'Autoclave Gnatus Bioclave 12L',brand:'Gnatus',model:'Bioclave 12L',serial:'500003402932',
+ power:'1600 VA',install:'2025-04-06',responsible:'Francy Cuellar',next:'',location:'',status:'Operativo',obs:'',last:'',provider:'',photos:[]
+}];
+function saveEquipments(){localStorage.setItem(EQUIP_KEY,JSON.stringify(equipmentList))}
+function findEquip(id){return equipmentList.find(x=>x.id===id)||equipmentList[0]}
+function renderEquipmentCards(){
+ const box=document.getElementById('equipmentCards'); if(!box)return;
+ box.innerHTML=equipmentList.map(e=>`<div class="card"><div class="hero"><div><span class="tag">${esc(e.id)}</span><h3>${esc(e.name)}</h3><p class="muted">${esc(e.brand)} · ${esc(e.model)} · Serie ${esc(e.serial)}</p></div><span class="pill ${e.status==='Operativo'?'ok':e.status==='En mantenimiento'?'warn':'bad'}">${esc(e.status)}</span></div>
+ <div class="actions"><button class="btn" onclick="openHoja('${esc(e.id)}')">📋 Hoja de vida</button><button class="btn secondary" onclick="openEvidence(findEquip('${esc(e.id)}').photos||[])" ${e.photos?.length?'':'disabled'}>📸 Fotos</button><button class="btn secondary" onclick="showQRFor('${esc(e.id)}')">🔲 QR</button><button class="btn secondary" onclick="openEquipForm('${esc(e.id)}')">✏️ Editar</button><button class="btn danger" onclick="deleteEquipment('${esc(e.id)}')">🗑️ Eliminar</button></div></div>`).join('');
+}
+function openHoja(id){currentEquipmentId=id;renderHoja();document.getElementById('mtCurrentEquip').textContent=currentEquipmentId;document.getElementById('cyCurrentEquip').textContent=currentEquipmentId;showSection('hoja');}
+function renderHoja(){
+ const e=findEquip(currentEquipmentId); if(!e)return;
+ hojaCode.textContent=e.id;hojaName.textContent=e.name;hojaBrand.textContent=e.brand||'—';hojaModel.textContent=e.model||'—';hojaSerial.textContent=e.serial||'—';hojaPower.textContent=e.power||'—';hojaInstall.textContent=e.install||'—';hojaResponsible.textContent=e.responsible||'—';hojaNext.textContent=e.next||'Pendiente de registrar';hojaLocation.textContent=e.location||'Por completar';
+ hojaStatus.textContent=(e.status||'Operativo').toUpperCase();document.getElementById('hojaPhotos').innerHTML=(e.photos||[]).length?(e.photos||[]).map(x=>`<div class='photo'><img src='${x.data}'><div class='muted'>${esc(x.name)}</div></div>`).join(''):'<p class="muted">Sin fotografías.</p>';hojaStatus.className='pill '+(e.status==='Operativo'?'ok':e.status==='En mantenimiento'?'warn':'bad');
+}
+function openEquipForm(id){
+ if(!isAdmin()){showSection('admin');alert('Primero entra al modo administrador.');return}
+ editingEquipmentId=id||null; const e=id?findEquip(id):{id:'',name:'',brand:'',model:'',serial:'',power:'',install:'',responsible:'',next:'',location:'',status:'Operativo',obs:'',last:'',provider:'',photos:[]};
+ equipModalTitle.textContent=id?'✏️ Editar equipo':'➕ Agregar equipo';
+ efCode.value=e.id;efName.value=e.name;efBrand.value=e.brand;efModel.value=e.model;efSerial.value=e.serial;efPower.value=e.power;efInstall.value=e.install;efResponsible.value=e.responsible;efNext.value=e.next;efLast.value=e.last||'';efLocation.value=e.location;efStatus.value=e.status||'Operativo';efProvider.value=e.provider||'';efObs.value=e.obs||'';document.getElementById('efPhotos').value='';document.getElementById('efPhotoPreview').innerHTML=(e.photos||[]).map(x=>`<div class='photo'><img src='${x.data}'><div class='muted'>${esc(x.name)}</div></div>`).join('');
+ equipModal.classList.add('show');
+}
+function closeEquipForm(){equipModal.classList.remove('show')}
+function saveEquipment(){
+ const id=efCode.value.trim().toUpperCase(), name=efName.value.trim();
+ if(!id||!name){alert('El código y el nombre son obligatorios.');return}
+ if(!editingEquipmentId && equipmentList.some(x=>x.id===id)){alert('Ese código ya existe.');return}
+ const newPhotos=await filesToData(document.getElementById('efPhotos')?.files||[]); const previous=editingEquipmentId?findEquip(editingEquipmentId):null; const e={id,name,brand:efBrand.value.trim(),model:efModel.value.trim(),serial:efSerial.value.trim(),power:efPower.value.trim(),install:efInstall.value,responsible:efResponsible.value.trim(),next:efNext.value,location:efLocation.value.trim(),status:efStatus.value,last:efLast.value,provider:efProvider.value.trim(),obs:efObs.value.trim(),photos:newPhotos.length?newPhotos:(previous?.photos||[])};
+ if(editingEquipmentId){const i=equipmentList.findIndex(x=>x.id===editingEquipmentId);equipmentList[i]=e;if(currentEquipmentId===editingEquipmentId)currentEquipmentId=id}else equipmentList.push(e);
+ saveEquipments();closeEquipForm();renderEquipmentCards();renderHoja();updateDashboard();alert('Equipo guardado correctamente.');
+}
+function deleteEquipment(id){
+ if(equipmentList.length===1){alert('Debe existir al menos un equipo.');return}
+ if(!confirm('¿Eliminar este equipo?'))return;
+ equipmentList=equipmentList.filter(x=>x.id!==id);saveEquipments();currentEquipmentId=equipmentList[0].id;renderEquipmentCards();renderHoja();updateDashboard();
+}
+function showQR(){showQRFor(currentEquipmentId)}
+function showQRFor(id){
+ currentEquipmentId=id;const e=findEquip(id), u=new URL(location.href);u.search='?equipo='+encodeURIComponent(e.id);u.hash='hoja';const url=u.toString();
+ qrUrl.textContent=url;qrImage.innerHTML='';
+ const img=document.createElement('img');img.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(url);img.alt='QR '+e.id;qrImage.appendChild(img);qrModal.classList.add('show');
+}
+function updateDashboard(){
+ const e=findEquip(currentEquipmentId);dashStatus.textContent=e.status||'Operativo';dashDate.textContent=e.next||'—';
+}
+function isAdmin(){return sessionStorage.getItem('bc_admin_ok')==='1'}
+function loginAdmin(){const p=adminPass.value;if(p===(localStorage.getItem(ADMIN_KEY)||'BioControl2026')){sessionStorage.setItem('bc_admin_ok','1');adminPass.value='';renderAdmin();alert('Modo administrador activado.')}else alert('Clave incorrecta.')}
+function renderAdmin(){loginBox.style.display=isAdmin()?'none':'block';adminPanel.style.display=isAdmin()?'block':'none'}
+function logoutAdmin(){sessionStorage.removeItem('bc_admin_ok');renderAdmin()}
+
+
+function daysUntil(dateStr){if(!dateStr)return null;const now=new Date();now.setHours(0,0,0,0);const d=new Date(dateStr+'T00:00:00');return Math.ceil((d-now)/86400000)}
+function statusFor(e){
+ const d=daysUntil(e.next); if(!e.next)return {label:'SIN FECHA',cls:'bad',msg:'No hay próxima fecha registrada'};
+ if(d<0)return {label:'VENCIDO',cls:'bad',msg:'Mantenimiento vencido hace '+Math.abs(d)+' día(s)'};
+ if(d<=30)return {label:'PRÓXIMO',cls:'warn',msg:'Mantenimiento dentro de '+d+' día(s)'};
+ return {label:'AL DÍA',cls:'ok',msg:'Mantenimiento en '+d+' día(s)'};
+}
+function renderAlerts(){
+ const counts={ok:0,warn:0,bad:0}; equipmentList.forEach(e=>counts[statusFor(e).cls]++);
+ alertSummary.innerHTML=`<div class="kpi"><span>🟢 Al día</span><strong>${counts.ok}</strong></div><div class="kpi"><span>🟡 Próximos ≤ 30 días</span><strong>${counts.warn}</strong></div><div class="kpi"><span>🔴 Vencidos / sin fecha</span><strong>${counts.bad}</strong></div>`;
+ alertList.innerHTML=equipmentList.map(e=>{const a=statusFor(e);return `<div class="doc"><div><strong>${esc(e.id)} — ${esc(e.name)}</strong><div class="muted">${esc(e.location||'Ubicación pendiente')}</div><div>${esc(a.msg)}</div></div><div class="actions"><span class="pill ${a.cls}">${a.label}</span><button class="btn secondary" onclick="openHoja('${esc(e.id)}')">📋 Ver hoja</button></div></div>`}).join('');
+}
+function renderReportSelect(){
+ reportEquipment.innerHTML=equipmentList.map(e=>`<option value="${esc(e.id)}">${esc(e.id)} — ${esc(e.name)}</option>`).join('');
+}
+function generateReport(){
+ const e=findEquip(reportEquipment.value), a=statusFor(e);
+ const m=mt.filter(x=>x.equipmentId===e.id||!x.equipmentId).slice(-20), c=cy.filter(x=>x.equipmentId===e.id||!x.equipmentId).slice(-20);
+ const w=open('','_blank');if(!w){alert('Permite ventanas emergentes para generar el informe.');return}
+ w.document.write(`<html lang="es"><head><meta charset="utf-8"><title>Informe BioControl ${esc(e.id)}</title><style>body{font-family:Arial;margin:35px;color:#172033}h1,h2{color:#115e59}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.box{border:1px solid #ddd;border-radius:8px;padding:10px}.pill{padding:4px 8px;border-radius:8px;background:#eee}.photo{display:inline-block;width:30%;margin:1%}.photo img{width:100%;height:160px;object-fit:contain;border:1px solid #ddd}@media print{button{display:none}}</style></head><body><h1>BioControl — Informe técnico</h1><p>Fecha de generación: ${new Date().toLocaleString('es-CO')}</p><h2>${esc(e.name)}</h2><div class="grid">
+<div class="box"><b>Código:</b> ${esc(e.id)}</div><div class="box"><b>Serie:</b> ${esc(e.serial)}</div><div class="box"><b>Marca:</b> ${esc(e.brand)}</div><div class="box"><b>Modelo:</b> ${esc(e.model)}</div><div class="box"><b>Ubicación:</b> ${esc(e.location||'—')}</div><div class="box"><b>Responsable:</b> ${esc(e.responsible||'—')}</div><div class="box"><b>Próximo mantenimiento:</b> ${esc(e.next||'—')}</div><div class="box"><b>Semáforo:</b> ${a.label} — ${esc(a.msg)}</div></div>
+<h2>Mantenimientos</h2>${m.length?m.map(x=>`<div class="box"><b>${esc(x.type)}</b> — ${esc(x.date)}<br>${esc(x.obs||'')}<br>Responsable: ${esc(x.tech||'—')} ${x.photos?.length?' · 📸 '+x.photos.length+' foto(s)':''}</div>`).join(''):'<p>Sin registros.</p>'}
+<h2>Ciclos</h2>${c.length?c.map(x=>`<div class="box">${esc(x.date)} — ${esc(x.program||'')} — ${esc(x.result)} — ${esc(x.tech||'')}</div>`).join(''):'<p>Sin registros.</p>'}
+<h2>Fotografías del equipo</h2>${(e.photos||[]).length?e.photos.map(x=>`<div class="photo"><img src="${x.data}"><div>${esc(x.name)}</div></div>`).join(''):'<p>Sin fotografías.</p>'}
+<div style="margin-top:30px"><button onclick="window.print()">🖨️ Imprimir / guardar PDF</button></div></body></html>`);
+ w.document.close();
+}
+function exportBackup(){
+ const data={version:1,equipment:equipmentList,maintenance:mt,cycles:cy,exportedAt:new Date().toISOString()};
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='BioControl_respaldo_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importBackup(){
+ const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.equipment)equipmentList=d.equipment;if(d.maintenance)mt=d.maintenance;if(d.cycles)cy=d.cycles;saveEquipments();localStorage.setItem('bc_mt',JSON.stringify(mt));localStorage.setItem('bc_cy',JSON.stringify(cy));renderEquipmentCards();renderHoja();renderMt();renderCy();updateDashboard();alert('Respaldo importado correctamente.')}catch(e){alert('El respaldo no es válido.')}};r.readAsText(f)};
+ i.click();
+}
+function changeAdminPassword(){const p=prompt('Nueva clave de administrador:');if(p&&p.length>=6){localStorage.setItem(ADMIN_KEY,p);alert('Clave cambiada en este navegador.')}else if(p)alert('La clave debe tener al menos 6 caracteres.')}
+renderEquipmentCards();renderHoja();updateDashboard();renderAdmin();renderMt();renderCy();renderDocs();renderAlerts();renderReportSelect();routeQR();
+
 </script>
 </body></html>
