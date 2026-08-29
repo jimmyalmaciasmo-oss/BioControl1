@@ -126,7 +126,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 </div>
 </section>
 
-<section id="hoja" class="section">
+<section id="hoja" class="section"><div id="qrHojaVidaPanel" class="card"><div><strong>🔲 Identificación QR del equipo</strong><br><small>Escanea este código para abrir directamente la Hoja de vida.</small></div><button class="btn" type="button" onclick="showHojaQr()">🔲 Ver / generar QR</button><div id="hojaQrStatus"></div></div>
 <div class="card"><h2>Hoja de vida técnica</h2><div class="form">
 <div><label>ID INTERNO</label><input value="AUT-GNA-BIO12L-001" readonly></div>
 <div><label>TIPO DE EQUIPO</label><input value="Esterilizador - Autoclave" readonly></div>
@@ -373,7 +373,7 @@ function showQr(id){
 function printQr(){
  const title=document.getElementById('qrTitle').innerText, qr=document.getElementById('qrBox').innerHTML, code=document.getElementById('qrCodeText').innerText;
  const w=window.open('','_blank'); if(!w)return;
- w.document.write('<!doctype html><html><head><title>QR BioControl</title><style>body{font-family:Arial;text-align:center;padding:30px}img{max-width:280px}h1{font-size:22px}</style></head><body><h1>BioControl</h1><h2>'+esc(title)+'</h2>'+qr+'<p>'+esc(code)+'</p></body></html>');w.document.close();w.print();
+ w.document.write('<!doctype html><html><head><title>QR BioControl</title><style>body{font-family:Arial;text-align:center;padding:30px}img{max-width:280px}h1{font-size:22px}</style></head><body><h1>BioControl</h1><h2>'+esc(title)+'</h2>'+qr+'<p>'+esc(code)+'</p><div id="hojaQrModal" class="bc-modal"><div class="bc-modal-box"><div class="bc-actions" style="justify-content:space-between"><h2>🔲 QR — Hoja de vida</h2><button class="btn secondary" onclick="closeModal('hojaQrModal')">Cerrar</button></div><div id="hojaQrInfo" style="text-align:center"></div><div id="hojaQrImage" class="bc-qr"></div><p id="hojaQrUrl" class="bc-small" style="word-break:break-all"></p><button class="btn" onclick="printHojaQr()">🖨️ Imprimir QR</button></div></div></body></html>');w.document.close();w.print();
 }
 function renderV6(){renderEquipment(); if(typeof renderDocuments==='function')renderDocuments(); if(typeof renderPhotos==='function')renderPhotos();}
 
@@ -388,5 +388,12 @@ function renderV6(){renderEquipment(); if(typeof renderDocuments==='function')re
 <div class="bc-actions" style="justify-content:space-between"><h2>📋 Ficha del equipo</h2><button class="btn secondary" onclick="closeModal('bcEqModal')">Cerrar</button></div>
 <div id="eqDetail"></div>
 </div></div>
-</body></html>
-<script>window.addEventListener('load',()=>setTimeout(renderV6,150));</script>
+<div id="hojaQrModal" class="bc-modal"><div class="bc-modal-box"><div class="bc-actions" style="justify-content:space-between"><h2>🔲 QR — Hoja de vida</h2><button class="btn secondary" onclick="closeModal('hojaQrModal')">Cerrar</button></div><div id="hojaQrInfo" style="text-align:center"></div><div id="hojaQrImage" class="bc-qr"></div><p id="hojaQrUrl" class="bc-small" style="word-break:break-all"></p><button class="btn" onclick="printHojaQr()">🖨️ Imprimir QR</button></div></div></body></html>
+<script>window.addEventListener('load',()=>setTimeout(renderV6,150));
+function hojaEquipo(){const p=new URLSearchParams(location.search);const id=p.get('equipo')||'AUT-001';return (typeof equipmentV6!=='undefined'&&equipmentV6.find(x=>x.id===id))||{id:'AUT-001',name:'Autoclave Gnatus Bioclave 12L',serial:'500003402932'};}
+function hojaPublicUrl(){const u=new URL(location.href);u.search='';u.hash='hoja';u.searchParams.set('equipo',hojaEquipo().id);return u.toString();}
+function showHojaQr(){const e=hojaEquipo(),target=hojaPublicUrl();document.getElementById('hojaQrInfo').innerHTML='<strong>'+esc(e.name)+'</strong><br>Código: '+esc(e.id)+' · Serie: '+esc(e.serial);document.getElementById('hojaQrUrl').textContent=target;const b=document.getElementById('hojaQrImage');b.innerHTML='';const img=document.createElement('img');img.style.maxWidth='320px';img.style.width='100%';img.src='https://api.qrserver.com/v1/create-qr-code/?size=320x320&data='+encodeURIComponent(target);img.onerror=()=>b.innerHTML='<p>Conecta a Internet para mostrar el QR.</p><code>'+esc(target)+'</code>';b.appendChild(img);document.getElementById('hojaQrModal').classList.add('show');}
+function printHojaQr(){const w=open('','_blank');if(!w)return;w.document.write('<html><body style="font-family:Arial;text-align:center"><h1>BioControl</h1>'+document.getElementById('hojaQrInfo').innerHTML+document.getElementById('hojaQrImage').innerHTML+'<p>'+esc(document.getElementById('hojaQrUrl').innerText)+'</p></body></html>');w.document.close();w.print();}
+function routeToHojaVida(){if(new URLSearchParams(location.search).has('equipo')){if(typeof showSection==='function')showSection('hoja');const st=document.getElementById('hojaQrStatus');if(st)st.innerHTML='🔲 <strong>Ficha abierta mediante QR:</strong> '+esc(hojaEquipo().id);}}
+addEventListener('load',()=>setTimeout(routeToHojaVida,300));
+</script>
