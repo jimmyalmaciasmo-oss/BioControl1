@@ -225,7 +225,7 @@ async function addMaintenance(){
 function renderMt(){
  mtList.innerHTML=mt.length?mt.slice().reverse().map((o,i)=>`<div class="doc"><div><strong>${esc(o.type)}</strong><div class="muted">${esc(o.date)} · ${esc(o.tech||'Sin responsable')}</div><div>${esc(o.obs||'')}</div>${o.meter?'<div class="muted">Horómetro/ciclos: '+esc(o.meter)+'</div>':''}${o.cost?'<div class="muted">Costo: $'+esc(o.cost)+'</div>':''}</div><div class="actions"><span class="pill ok">${o.next?'Próximo: '+esc(o.next):'Registrado'}</span>${o.photos?.length?'<button class="btn secondary" onclick="openEvidence(mt['+(mt.length-1-i)+'].photos)">📸 Ver '+o.photos.length+' foto(s)</button>':''}</div></div>`).join(''):'Aún no hay mantenimientos registrados.'
 }
-async async function addCycle(){
+async function addCycle(){
  const files=await filesToData(document.getElementById('cyPhotos')?.files||[]);
  const o={equipmentId:currentEquipmentId,date:cyDate.value,program:cyProgram.value,result:cyResult.value,tech:cyTech.value,photos:files};
  if(!o.date){alert('Ingrese la fecha.');return}
@@ -274,7 +274,7 @@ function openEquipForm(id){
  equipModal.classList.add('show');
 }
 function closeEquipForm(){equipModal.classList.remove('show')}
-function saveEquipment(){
+async function saveEquipment(){
  const id=efCode.value.trim().toUpperCase(), name=efName.value.trim();
  if(!id||!name){alert('El código y el nombre son obligatorios.');return}
  if(!editingEquipmentId && equipmentList.some(x=>x.id===id)){alert('Ese código ya existe.');return}
