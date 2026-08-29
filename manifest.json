@@ -1,0 +1,10 @@
+{
+  "name": "BioControl - Autoclave Gnatus Bioclave 12L",
+  "short_name": "BioControl",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f8",
+  "theme_color": "#0f766e",
+  "lang": "es",
+  "icons": []
+}

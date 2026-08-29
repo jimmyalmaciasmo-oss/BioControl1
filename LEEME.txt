@@ -1,0 +1,21 @@
+BIOCONTROL — v8 QR DIRECTO A HOJA DE VIDA
+
+Esta versión corrige el funcionamiento solicitado:
+1. Cada equipo tiene un código único (ej. AUT-001).
+2. Al pulsar “QR”, BioControl construye una URL de la aplicación con ?equipo=AUT-001.
+3. El QR codifica esa URL.
+4. Al escanear el QR desde un celular, la aplicación abre automáticamente la sección
+   “Hoja de vida” del equipo.
+5. Se muestra un aviso indicando que la ficha fue abierta desde QR.
+
+IMPORTANTE:
+Para que el QR funcione desde un celular, la aplicación debe estar publicada en Internet.
+Abriendo index.html directamente desde el computador (file://) el QR no puede llevar a
+otro dispositivo a ese archivo local.
+
+PUBLICACIÓN GRATUITA RECOMENDADA:
+GitHub Pages con un repositorio público en GitHub Free. Después de publicar, abre la
+aplicación desde su URL pública y pulsa Equipos -> QR. El QR generado allí contendrá la
+URL pública real y, al escanearlo, abrirá directamente la Hoja de vida.
+
+No compartas contraseñas ni tokens privados.

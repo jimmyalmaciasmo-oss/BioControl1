@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.json">
+<title>BioControl | Autoclave Gnatus</title>
+<style>
+:root{--primary:#0f766e;--primary2:#115e59;--bg:#f4f7f8;--card:#fff;--text:#173042;--muted:#6b7b86;--line:#dce5e8;--danger:#b42318;--warn:#b54708;--ok:#067647}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.app{min-height:100vh;display:flex}
+.sidebar{width:250px;background:#0b3b3a;color:#fff;padding:22px 16px;position:fixed;inset:0 auto 0 0;z-index:10}
+.brand{font-size:21px;font-weight:800;padding:8px 10px 24px}.brand span{color:#6ee7b7}.nav button{display:block;width:100%;text-align:left;background:transparent;color:#d8eeee;padding:12px;border-radius:10px;margin:4px 0}.nav button.active,.nav button:hover{background:#145c59;color:#fff}
+.main{margin-left:250px;width:calc(100% - 250px);padding:24px;max-width:1500px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.top h1{margin:0;font-size:26px}.top p{margin:5px 0;color:var(--muted)}
+.grid{display:grid;gap:16px}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.two{grid-template-columns:1.2fr .8fr}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 8px #0b3b3a0d}.stat .label{color:var(--muted);font-size:13px}.stat .value{font-size:29px;font-weight:800;margin-top:8px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}.ok{background:#dcfae6;color:var(--ok)}.warn{background:#fef0c7;color:var(--warn)}.danger{background:#fee4e2;color:var(--danger)}
+h2{font-size:18px;margin:0 0 14px}.section{display:none}.section.active{display:block}
+label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}input,select,textarea{width:100%;border:1px solid #cdd9dd;border-radius:9px;padding:10px;background:#fff;color:var(--text)}textarea{min-height:90px;resize:vertical}.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.full{grid-column:1/-1}
+.btn{background:var(--primary);color:#fff;border-radius:9px;padding:10px 14px;font-weight:700}.btn:hover{background:var(--primary2)}.btn.secondary{background:#e8f2f1;color:#0b514e}.btn.danger{background:#fee4e2;color:var(--danger)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-size:11px;text-transform:uppercase}
+.kv{display:grid;grid-template-columns:180px 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}.kv div{padding:10px;border-bottom:1px solid var(--line)}.kv div:nth-child(odd){font-weight:700;background:#f7fafb}
+.notice{padding:12px;border-radius:10px;background:#eef8f7;color:#155e59;font-size:13px;margin-bottom:14px}
+.maintenance-status{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;border:1px solid var(--line);margin-bottom:14px}
+.traffic-light{width:18px;height:18px;border-radius:50%;flex:0 0 18px;box-shadow:0 0 0 4px rgba(0,0,0,.04)}
+.traffic-green{background:#16a34a}.traffic-yellow{background:#eab308}.traffic-red{background:#dc2626}.traffic-gray{background:#94a3b8}
+.alert-list{display:grid;gap:8px;margin-top:10px}.alert-item{padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--line)}
+.doc-actions{display:flex;gap:8px;flex-wrap:wrap}.file-name{font-weight:700}
+.mobile-nav{display:none}.empty{color:var(--muted);text-align:center;padding:30px}
+@media(max-width:900px){.sidebar{display:none}.main{margin:0;width:100%;padding:16px;padding-bottom:85px}.stats{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#0b3b3a;z-index:20;justify-content:space-around;padding:8px}.mobile-nav button{background:transparent;color:#d8eeee;font-size:11px}.mobile-nav button.active{color:#6ee7b7}.form{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.kv div:nth-child(odd){border-bottom:0}.top h1{font-size:21px}}
+@media print{.sidebar,.mobile-nav,.actions{display:none!important}.main{margin:0;width:100%;padding:0}.card{box-shadow:none}}
+</style>
+<style>
+.equip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.equip-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}
+.equip-card h3{margin:0 0 8px}.muted{color:#64748b}.mini{font-size:12px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
+.photo-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.photo-card img{width:100%;height:130px;object-fit:cover;display:block}.photo-card div{padding:8px}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;background:#eef2ff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+</style><style>
+.uni-banner{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f8fafc;margin-bottom:14px}
+.backup-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+</style>
+<style>
+.bc-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.bc-modal.show{display:flex}.bc-modal-box{background:#fff;border-radius:16px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:22px}
+.bc-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.bc-eq-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.bc-eq-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}
+.bc-eq-card h3{margin:0 0 6px}.bc-meta{font-size:13px;color:#64748b;line-height:1.7}
+.bc-qr{display:flex;justify-content:center;padding:12px;background:#fff}.bc-qr canvas{max-width:100%}
+.bc-small{font-size:12px;color:#64748b}.bc-actions{display:flex;gap:8px;flex-wrap:wrap}
+.bc-search{width:100%;max-width:420px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bc-danger{background:#fee2e2!important;color:#991b1b!important}
+.bc-success{background:#dcfce7!important;color:#166534!important}
+.bc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.bc-kpi{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.bc-kpi strong{display:block;font-size:24px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">Bio<span>Control</span><br><small style="font-weight:500;color:#b7d8d5">Gestión de equipos biomédicos</small></div>
+  <nav class="nav">
+    <button data-section="dashboard" class="active">📊 Dashboard</button>
+    <button data-section="hoja">📋 Hoja de vida</button>
+    <button data-section="mantenimiento">🔧 Mantenimiento</button>
+    <button data-section="ciclos">♻️ Ciclos</button>
+    <button data-section="componentes">⚙️ Componentes</button>
+    <button data-section="documentos">📁 Documentos</button>
+  </nav>
+</aside>
+
+<main class="main"><div class="uni-banner"><strong>🎓 BioControl — Proyecto universitario</strong><br><small>Versión demostrativa sin suscripciones ni servicios de pago. Los datos se almacenan localmente en este dispositivo.</small>
+<div class="backup-actions"><button class="btn secondary" type="button" onclick="exportBioControl()">💾 Respaldar datos</button><button class="btn secondary" type="button" onclick="document.getElementById('importBackup').click()">📥 Restaurar datos</button><input id="importBackup" type="file" accept=".json" style="display:none" onchange="importBioControl(event)"></div></div>
+<header class="top">
+  <div><h1 id="title">Dashboard</h1><p>Autoclave Gnatus Bioclave 12L · ID AUT-GNA-BIO12L-001</p></div>
+  <span id="statusPill" class="pill ok">OPERATIVO</span>
+</header>
+
+<section id="dashboard" class="section active">
+  <div class="grid stats">
+    <div class="card stat"><div class="label">Estado del equipo</div><div class="value" style="font-size:22px">Operativo</div><span class="pill ok">En servicio</span></div>
+    <div class="card stat"><div class="label">Mantenimientos registrados</div><div class="value" id="maintCount">0</div></div>
+    <div class="card stat"><div class="label">Ciclos registrados</div><div class="value" id="cycleCount">0</div></div>
+    <div class="card stat"><div class="label">Último mantenimiento</div><div class="value" id="lastMaint" style="font-size:18px">—</div></div>
+  </div>
+  <div class="grid two" style="margin-top:16px">
+    <div class="card"><h2>Resumen del equipo</h2><div class="kv">
+      <div>Marca</div><div>Gnatus</div><div>Modelo</div><div>Bioclave 12L</div><div>N.º de serie</div><div>500003402932</div><div>Instalación</div><div>06/04/2025</div><div>Responsable</div><div>Francy Cuellar</div><div>Ubicación</div><div>Cra. 15 # 118-75 · Consultorio 108</div>
+    </div></div>
+    <div class="card"><h2>Alertas y mantenimiento</h2>
+<div id="maintenanceStatus" class="maintenance-status"><span class="traffic-light traffic-gray"></span><div><strong>Sin fecha programada</strong><br><small class="muted">Registra la próxima fecha de mantenimiento.</small></div></div>
+<div id="alertList" class="alert-list"></div>
+<div class="notice">Las fechas son recordatorios administrativos. Los criterios técnicos de mantenimiento deben seguir el manual específico del equipo y los procedimientos institucionales.</div>
+<button class="btn" onclick="showSection('mantenimiento')">Registrar mantenimiento</button></div>
+  </div>
+</section>
+
+
+
+<section id="equipos" class="section">
+<div class="card">
+<h2>🏥 Equipos</h2>
+<div class="notice">BioControl identifica cada equipo con un código único. El QR lleva al identificador del equipo y permite localizar su ficha dentro de BioControl.</div>
+<div class="bc-toolbar">
+<input id="equipmentSearch" class="bc-search" placeholder="Buscar por equipo, serie o código..." oninput="renderEquipment()">
+<button class="btn" type="button" onclick="toggleNewEquipment()">+ Nuevo equipo</button>
+</div>
+<div id="newEquipment" style="display:none" class="card">
+<h3>Registrar equipo</h3>
+<div class="form">
+<div><label>NOMBRE DEL EQUIPO</label><input id="eqName" placeholder="Ej.: Autoclave Gnatus Bioclave 12L"></div>
+<div><label>MARCA</label><input id="eqBrand" placeholder="Gnatus"></div>
+<div><label>MODELO</label><input id="eqModel" placeholder="Bioclave 12L"></div>
+<div><label>NÚMERO DE SERIE</label><input id="eqSerial" placeholder="Serie"></div>
+<div><label>FECHA DE INSTALACIÓN</label><input id="eqInstall" type="date"></div>
+<div><label>RESPONSABLE</label><input id="eqResponsible" placeholder="Responsable"></div>
+<div><label>ÁREA / SERVICIO</label><input id="eqArea" placeholder="Ej.: Esterilización"></div>
+</div>
+<div class="actions"><button class="btn" type="button" onclick="saveEquipment()">Guardar equipo</button></div>
+</div>
+<div id="equipmentList" class="bc-eq-grid"></div>
+</div>
+</section>
+
+<section id="hoja" class="section">
+<div class="card"><h2>Hoja de vida técnica</h2><div class="form">
+<div><label>ID INTERNO</label><input value="AUT-GNA-BIO12L-001" readonly></div>
+<div><label>TIPO DE EQUIPO</label><input value="Esterilizador - Autoclave" readonly></div>
+<div><label>MARCA</label><input value="Gnatus" readonly></div><div><label>MODELO</label><input value="Bioclave 12L" readonly></div>
+<div><label>FABRICANTE</label><input value="Alliage S/A Indústrias Médico Odontológica" readonly></div><div><label>PAÍS DE FABRICACIÓN</label><input value="Brasil" readonly></div>
+<div><label>NÚMERO DE SERIE</label><input value="500003402932" readonly></div><div><label>O.P.</label><input value="11963310" readonly></div>
+<div><label>CÓDIGO</label><input value="160000002310" readonly></div><div><label>FECHA DE FABRICACIÓN</label><input value="03/04/2025" readonly></div>
+<div><label>REGISTRO INVIMA</label><input value="10069210082" readonly></div><div><label>IMPORTADOR</label><input value="Representaciones A & D Ltda." readonly></div>
+<div><label>ALIMENTACIÓN</label><input value="127 / 220 V~" readonly></div><div><label>FRECUENCIA</label><input value="50/60 Hz" readonly></div>
+<div><label>POTENCIA DE ENTRADA</label><input value="1600 VA" readonly></div><div><label>CAPACIDAD</label><input value="12 L" readonly></div>
+<div><label>UBICACIÓN</label><input value="Cra. 15 # 118-75, Consultorio 108" readonly></div><div><label>RESPONSABLE</label><input value="Francy Cuellar" readonly></div>
+<div><label>FECHA DE INSTALACIÓN</label><input value="06/04/2025" readonly></div><div><label>ESTADO</label><select id="equipmentStatus"><option>Operativo</option><option>En mantenimiento</option><option>Fuera de servicio</option></select></div>
+<div class="full"><label>OBSERVACIONES</label><textarea id="obs">Equipo destinado a esterilización de instrumental odontológico.</textarea></div>
+</div><div class="actions"><button class="btn" onclick="saveGeneral()">Guardar cambios</button><button class="btn secondary" onclick="window.print()">Imprimir hoja de vida</button></div></div>
+</section>
+
+<section id="mantenimiento" class="section">
+<div class="card"><h2>Registrar mantenimiento</h2><form id="maintForm" class="form">
+<div><label>FECHA</label><input id="mDate" type="date" required></div><div><label>TIPO</label><select id="mType"><option>Preventivo</option><option>Correctivo</option><option>Inspección</option></select></div>
+<div><label>TÉCNICO / RESPONSABLE</label><input id="mTech" required></div><div><label>RESULTADO</label><select id="mResult"><option>Conforme</option><option>Con observaciones</option><option>No conforme</option></select></div>
+<div class="full"><label>ACTIVIDADES REALIZADAS</label><textarea id="mActivity" placeholder="Ej.: inspección visual, limpieza, revisión de puerta, empaque, conexiones, pruebas funcionales..." required></textarea></div>
+<div class="full"><label>OBSERVACIONES / RECOMENDACIONES</label><textarea id="mObs"></textarea></div>
+<div><label>PRÓXIMA FECHA</label><input id="mNext" type="date"></div>
+<div class="actions full"><button class="btn">Guardar mantenimiento</button></div>
+</form></div>
+<div class="card" style="margin-top:16px"><h2>Historial</h2><div id="maintTable"></div></div>
+</section>
+
+<section id="ciclos" class="section">
+<div class="card"><h2>Registro de ciclos de esterilización</h2><div class="notice">Usa esta sección para trazabilidad. Los valores de temperatura, presión y tiempo deben registrarse según el programa utilizado y el procedimiento autorizado.</div>
+<form id="cycleForm" class="form">
+<div><label>FECHA</label><input id="cDate" type="date" required></div><div><label>N.º DE CICLO</label><input id="cNumber" type="number" min="1" required></div>
+<div><label>PROGRAMA / CICLO</label><input id="cProgram" placeholder="Según programa del equipo" required></div><div><label>RESULTADO</label><select id="cResult"><option>Exitoso</option><option>Con observaciones</option><option>Fallido</option></select></div>
+<div><label>TEMPERATURA REGISTRADA</label><input id="cTemp" placeholder="°C"></div><div><label>PRESIÓN REGISTRADA</label><input id="cPress" placeholder="Unidad según registro"></div>
+<div><label>TIEMPO DEL CICLO</label><input id="cTime" placeholder="min"></div><div><label>OPERADOR</label><input id="cOperator" required></div>
+<div class="full"><label>OBSERVACIONES</label><textarea id="cObs"></textarea></div><div class="actions full"><button class="btn">Guardar ciclo</button></div>
+</form></div>
+<div class="card" style="margin-top:16px"><h2>Historial de ciclos</h2><div id="cycleTable"></div></div>
+</section>
+
+<section id="componentes" class="section">
+<div class="card"><h2>Componentes y puntos de mantenimiento</h2><div class="notice">Esta lista es una estructura inicial. La identificación definitiva de componentes y criterios de prueba debe validarse con el manual del modelo Bioclave 12L.</div>
+<table><thead><tr><th>Sistema</th><th>Componente</th><th>Qué registrar</th></tr></thead><tbody>
+<tr><td>Puerta</td><td>Empaque y mecanismo de cierre</td><td>Estado, desgaste, sellado, funcionamiento</td></tr>
+<tr><td>Cámara</td><td>Cámara de esterilización</td><td>Limpieza, integridad, residuos</td></tr>
+<tr><td>Calentamiento</td><td>Sistema calefactor</td><td>Funcionamiento y pruebas autorizadas</td></tr>
+<tr><td>Control</td><td>Sensores y control electrónico</td><td>Lecturas, alarmas, estado</td></tr>
+<tr><td>Presión</td><td>Válvulas / sistema de presión</td><td>Inspección y prueba según manual</td></tr>
+<tr><td>Interfaz</td><td>Panel / pantalla</td><td>Indicaciones, botones, alarmas</td></tr>
+<tr><td>Eléctrico</td><td>Cableado y alimentación</td><td>Integridad y seguridad eléctrica</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="documentos" class="section">
+<div class="card"><h2>Documentos del equipo</h2>
+<div class="notice">El manual específico del Gnatus Bioclave 12L que enviaste ya viene incluido en esta versión. También puedes seleccionar documentos adicionales desde tu computador.</div>
+<table><thead><tr><th>Documento</th><th>Estado</th><th>Observación / acción</th></tr></thead><tbody>
+<tr><td><span class="file-name">Manual de usuario – Gnatus Bioclave 12L</span></td><td><span class="pill ok">Disponible</span></td>
+<td><div class="doc-actions"><a class="btn secondary" href="./Manual_Gnatus_Bioclave_12L.pdf" target="_blank" rel="noopener">📖 Abrir manual</a></div></td></tr>
+<tr><td>Manual de servicio</td><td><span class="pill warn">Pendiente</span></td><td>Subir si está disponible</td></tr>
+<tr><td>Registro / documentación INVIMA</td><td><span class="pill ok">Registrado</span></td><td>10069210082</td></tr>
+<tr><td>Certificados / verificaciones</td><td><span class="pill warn">Pendiente</span></td><td>Registrar cuando existan</td></tr>
+</tbody></table>
+<div style="margin-top:18px"><h2>Agregar otro documento</h2>
+<div class="form">
+<div><label>NOMBRE DEL DOCUMENTO</label><input id="docName" placeholder="Ej.: Certificado de calibración"></div><div><label>TIPO</label><select id="docType"><option>Manual</option><option>Certificado</option><option>INVIMA</option><option>Mantenimiento</option><option>Garantía</option><option>Otro</option></select></div><div><label>FECHA</label><input id="docDate" type="date"></div><div><label>DESCRIPCIÓN</label><input id="docDescription" placeholder="Observaciones"></div>
+<div><label>ARCHIVO</label><input id="docFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"></div>
+</div>
+<div class="actions"><button class="btn" type="button" onclick="addDocument()">📤 Agregar documento</button></div>
+<div id="uploadedDocs" style="margin-top:14px"></div>
+<div style="margin-top:20px"><h2>📸 Fotografías del equipo</h2>
+<div class="form"><div><label>DESCRIPCIÓN DE LA FOTO</label><input id="photoName" placeholder="Ej.: Placa de identificación"></div>
+<div><label>FOTOGRAFÍA</label><input id="photoFile" type="file" accept="image/*"></div></div>
+<div class="actions"><button class="btn" type="button" onclick="addPhoto()">📸 Agregar fotografía</button></div>
+<div id="photoGrid" class="photo-grid"></div></div>
+</div></div>
+</section>
+</main>
+</div>
+<div class="mobile-nav">
+<button data-section="dashboard" class="active">📊<br>Inicio</button><button data-section="hoja">📋<br>Hoja</button><button data-section="mantenimiento">🔧<br>Manto.</button><button data-section="ciclos">♻️<br>Ciclos</button><button data-section="componentes">⚙️<br>Partes</button>
+</div>
+<script>
+const KEY='biocontrol_gnatus_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"maintenance":[],"cycles":[],"general":{"status":"Operativo","obs":"Equipo destinado a esterilización de instrumental odontológico."}}');
+function persist(){localStorage.setItem(KEY,JSON.stringify(db));render();}
+function showSection(id){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-section]').forEach(b=>b.classList.toggle('active',b.dataset.section===id));const names={dashboard:'Dashboard',hoja:'Hoja de vida',mantenimiento:'Mantenimiento',ciclos:'Ciclos de esterilización',componentes:'Componentes',documentos:'Documentos'};document.getElementById('title').textContent=names[id]||id;window.scrollTo(0,0)}
+document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.section)));
+document.getElementById('maintForm').addEventListener('submit',e=>{e.preventDefault();db.maintenance.unshift({date:mDate.value,type:mType.value,tech:mTech.value,result:mResult.value,activity:mActivity.value,obs:mObs.value,next:mNext.value});e.target.reset();persist();});
+document.getElementById('cycleForm').addEventListener('submit',e=>{e.preventDefault();db.cycles.unshift({date:cDate.value,number:cNumber.value,program:cProgram.value,result:cResult.value,temp:cTemp.value,press:cPress.value,time:cTime.value,operator:cOperator.value,obs:cObs.value});e.target.reset();persist();});
+function saveGeneral(){db.general={status:equipmentStatus.value,obs:obs.value};persist();alert('Cambios guardados en este dispositivo.')}
+
+function parseDateLocal(value){
+  if(!value) return null;
+  const [y,m,d]=value.split('-').map(Number);
+  return new Date(y,m-1,d);
+}
+function daysUntil(value){
+  const target=parseDateLocal(value), today=new Date();
+  if(!target) return null;
+  today.setHours(0,0,0,0); target.setHours(0,0,0,0);
+  return Math.round((target-today)/86400000);
+}
+function maintenanceInfo(){
+  const next=db.maintenance.find(x=>x.next)?.next;
+  if(!next) return {next:null,days:null,state:'none'};
+  const days=daysUntil(next);
+  if(days<0) return {next,days,state:'red'};
+  if(days<=30) return {next,days,state:'yellow'};
+  return {next,days,state:'green'};
+}
+function formatDate(value){
+  if(!value) return '—';
+  const [y,m,d]=value.split('-'); return `${d}/${m}/${y}`;
+}
+function renderMaintenanceAlert(){
+  const box=document.getElementById('maintenanceStatus');
+  const list=document.getElementById('alertList');
+  if(!box || !list) return;
+  const info=maintenanceInfo();
+  let cls='traffic-gray', title='Sin fecha programada', detail='Registra la próxima fecha de mantenimiento.';
+  if(info.state==='green'){cls='traffic-green';title='🟢 Mantenimiento al día';detail=`Próximo mantenimiento: ${formatDate(info.next)} · faltan ${info.days} días.`;}
+  if(info.state==='yellow'){cls='traffic-yellow';title='🟡 Mantenimiento próximo';detail=`Próximo mantenimiento: ${formatDate(info.next)} · faltan ${info.days} días.`;}
+  if(info.state==='red'){cls='traffic-red';title='🔴 Mantenimiento vencido';detail=`La fecha programada fue ${formatDate(info.next)} · vencido hace ${Math.abs(info.days)} días.`;}
+  box.innerHTML=`<span class="traffic-light ${cls}"></span><div><strong>${title}</strong><br><small>${detail}</small></div>`;
+  if(!info.next){list.innerHTML='';return;}
+  const items=[];
+  if(info.days<=30 && info.days>15) items.push(`🔔 Recordatorio: faltan ${info.days} días para el mantenimiento.`);
+  if(info.days<=15 && info.days>7) items.push('🔔 Recordatorio: faltan 15 días o menos para el mantenimiento.');
+  if(info.days<=7 && info.days>0) items.push(`🔔 Prioridad alta: faltan ${info.days} días.`);
+  if(info.days===0) items.push('🚨 El mantenimiento vence hoy.');
+  if(info.days<0) items.push('🚨 Acción requerida: el mantenimiento está vencido.');
+  list.innerHTML=items.map(x=>`<div class="alert-item">${x}</div>`).join('');
+}
+const DOC_DB='biocontrol_documents_v2';
+let uploadedDocs=[];
+function openDocDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DOC_DB,1);req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('documents')){const store=db.createObjectStore('documents',{keyPath:'id',autoIncrement:true});store.createIndex('createdAt','createdAt');}};req.onsuccess=e=>resolve(e.target.result);req.onerror=()=>reject(req.error);});}
+async function loadDocuments(){try{const idb=await openDocDB();uploadedDocs=await new Promise((resolve,reject)=>{const tx=idb.transaction('documents','readonly');const req=tx.objectStore('documents').getAll();req.onsuccess=()=>resolve(req.result.sort((a,b)=>b.createdAt-a.createdAt));req.onerror=()=>reject(req.error);});renderDocuments();renderPhotos();renderEquipment();}catch(e){console.error(e);}}
+function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+async function addDocument(){
+ const name=document.getElementById('docName').value.trim(); const file=document.getElementById('docFile').files[0];
+ if(!file){alert('Selecciona un archivo.');return;}
+ const max=50*1024*1024; if(file.size>max){alert('El archivo supera 50 MB.');return;}
+ try{const idb=await openDocDB();await new Promise((resolve,reject)=>{const tx=idb.transaction('documents','readwrite');tx.objectStore('documents').add({name:name||file.name,fileName:file.name,type:file.type||'application/octet-stream',size:file.size,createdAt:Date.now(),blob:file});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+ document.getElementById('docName').value='';document.getElementById('docFile').value='';await loadDocuments();alert('Documento guardado en este dispositivo.');
+ }catch(e){console.error(e);alert('No se pudo guardar el documento.');}
+}
+async function openUploadedDoc(id, download=false){try{const idb=await openDocDB();const d=await new Promise((resolve,reject)=>{const req=idb.transaction('documents','readonly').objectStore('documents').get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});if(!d)return;const url=URL.createObjectURL(d.blob);const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';if(download)a.download=d.fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){console.error(e);alert('No se pudo abrir el documento.');}}
+async function deleteUploadedDoc(id){if(!confirm('¿Eliminar este documento de BioControl?'))return;try{const idb=await openDocDB();await new Promise((resolve,reject)=>{const tx=idb.transaction('documents','readwrite');tx.objectStore('documents').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});await loadDocuments();}catch(e){alert('No se pudo eliminar el documento.');}}
+function renderDocuments(){
+ const el=document.getElementById('uploadedDocs');if(!el)return;
+ if(!uploadedDocs.length){el.innerHTML='<div class="empty">No hay documentos adicionales registrados.</div>';return;}
+ el.innerHTML='<h3 style="margin-bottom:8px">Documentos guardados en este dispositivo</h3><table><thead><tr><th>Documento</th><th>Archivo</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody>'+uploadedDocs.map(d=>`<tr><td>${esc(d.name)}</td><td>${esc(d.fileName)}</td><td>${(d.size/1024/1024).toFixed(2)} MB</td><td><div class="doc-actions"><button class="btn secondary" type="button" onclick="openUploadedDoc(${d.id})">📖 Abrir</button><button class="btn secondary" type="button" onclick="openUploadedDoc(${d.id},true)">⬇️ Descargar</button><button class="btn secondary" type="button" onclick="deleteUploadedDoc(${d.id})">🗑️ Eliminar</button></div></td></tr>`).join('')+'</tbody></table>';
+}
+loadDocuments();
+
+function render(){
+ maintCount.textContent=db.maintenance.length;cycleCount.textContent=db.cycles.length;lastMaint.textContent=db.maintenance[0]?.date||'—';renderMaintenanceAlert();renderDocuments();
+ equipmentStatus.value=db.general.status;obs.value=db.general.obs;
+ statusPill.textContent=db.general.status.toUpperCase();statusPill.className='pill '+(db.general.status==='Operativo'?'ok':db.general.status==='En mantenimiento'?'warn':'danger');
+ maintTable.innerHTML=db.maintenance.length?'<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Técnico</th><th>Resultado</th><th>Actividad</th><th>Próxima</th></tr></thead><tbody>'+db.maintenance.map(x=>`<tr><td>${x.date}</td><td>${x.type}</td><td>${x.tech}</td><td>${x.result}</td><td>${x.activity}${x.obs?'<br><small>'+x.obs+'</small>':''}</td><td>${x.next||'—'}</td></tr>`).join('')+'</tbody></table>':'<div class="empty">No hay mantenimientos registrados.</div>';
+ cycleTable.innerHTML=db.cycles.length?'<table><thead><tr><th>Fecha</th><th>Ciclo</th><th>Programa</th><th>Resultado</th><th>Temp.</th><th>Presión</th><th>Tiempo</th><th>Operador</th></tr></thead><tbody>'+db.cycles.map(x=>`<tr><td>${x.date}</td><td>${x.number}</td><td>${x.program}</td><td>${x.result}</td><td>${x.temp||'—'}</td><td>${x.press||'—'}</td><td>${x.time||'—'}</td><td>${x.operator}</td></tr>`).join('')+'</tbody></table>':'<div class="empty">No hay ciclos registrados.</div>';
+}
+render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+function exportBioControl(){
+ const payload={version:5,exportedAt:new Date().toISOString(),database:db};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+ a.download='BioControl_respaldo_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function importBioControl(event){
+ const file=event.target.files[0]; if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const payload=JSON.parse(reader.result);
+   if(!payload.database) throw new Error();
+   db=payload.database;
+   localStorage.setItem('biocontrol_db',JSON.stringify(db));
+   render();
+   alert('Respaldo restaurado correctamente.');
+  }catch(e){alert('No se pudo restaurar el respaldo. Verifica que sea un archivo de BioControl.');}
+ };
+ reader.readAsText(file);
+}
+
+
+const EQ_KEY='biocontrol_equipment_v6';
+let equipmentV6=JSON.parse(localStorage.getItem(EQ_KEY)||'null');
+if(!equipmentV6){
+ equipmentV6=[{id:'AUT-001',name:'Autoclave Gnatus Bioclave 12L',brand:'Gnatus',model:'Bioclave 12L',serial:'500003402932',install:'2025-04-06',responsible:'Francy Cuellar',area:'',qr:'BIOCONTROL:EQUIPO:AUT-001'}];
+ localStorage.setItem(EQ_KEY,JSON.stringify(equipmentV6));
+}
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function saveEquipmentV6(){localStorage.setItem(EQ_KEY,JSON.stringify(equipmentV6));}
+function toggleNewEquipment(){const e=document.getElementById('newEquipment');if(e)e.style.display=e.style.display==='none'?'block':'none';}
+function saveEquipment(){
+ const obj={id:'AUT-'+String(equipmentV6.length+1).padStart(3,'0'),
+ name:document.getElementById('eqName').value.trim(),brand:document.getElementById('eqBrand').value.trim(),
+ model:document.getElementById('eqModel').value.trim(),serial:document.getElementById('eqSerial').value.trim(),
+ install:document.getElementById('eqInstall').value,responsible:document.getElementById('eqResponsible').value.trim(),
+ area:document.getElementById('eqArea').value.trim()};
+ if(!obj.name){alert('Escribe el nombre del equipo.');return;}
+ obj.qr='BIOCONTROL:EQUIPO:'+obj.id; equipmentV6.push(obj); saveEquipmentV6(); toggleNewEquipment(); renderEquipment();
+}
+function renderEquipment(){
+ const el=document.getElementById('equipmentList');if(!el)return;
+ const q=(document.getElementById('equipmentSearch')?.value||'').toLowerCase();
+ const arr=equipmentV6.filter(e=>[e.id,e.name,e.serial,e.brand,e.model].join(' ').toLowerCase().includes(q));
+ el.innerHTML=arr.map(e=>`<div class="bc-eq-card"><h3>${esc(e.name)}</h3>
+ <div class="bc-meta"><strong>Código:</strong> ${esc(e.id)}<br><strong>Marca/modelo:</strong> ${esc(e.brand)} ${esc(e.model)}<br><strong>Serie:</strong> ${esc(e.serial)||'—'}<br><strong>Instalación:</strong> ${esc(e.install)||'—'}<br><strong>Responsable:</strong> ${esc(e.responsible)||'—'}<br><strong>Área:</strong> ${esc(e.area)||'—'}</div>
+ <div class="bc-actions" style="margin-top:10px"><button class="btn" onclick="showEquipment('${e.id}')">📋 Ver ficha</button><button class="btn secondary" onclick="showQr('${e.id}')">🔲 QR</button><button class="btn danger" onclick="removeEquipment('${e.id}')">🗑️ Eliminar</button></div></div>`).join('') || '<div class="empty">No hay equipos que coincidan con la búsqueda.</div>';
+}
+function removeEquipment(id){if(id==='AUT-001'){alert('El equipo Gnatus principal no se elimina desde esta versión.');return;}if(confirm('¿Eliminar este equipo?')){equipmentV6=equipmentV6.filter(e=>e.id!==id);saveEquipmentV6();renderEquipment();}}
+function showEquipment(id){
+ const e=equipmentV6.find(x=>x.id===id);if(!e)return;
+ const info=maintenanceInfo();
+ document.getElementById('eqDetail').innerHTML=`<div class="bc-kpis"><div class="bc-kpi"><span>Código</span><strong>${esc(e.id)}</strong></div><div class="bc-kpi"><span>Serie</span><strong>${esc(e.serial)||'—'}</strong></div></div>
+ <p><strong>Equipo:</strong> ${esc(e.name)}<br><strong>Marca:</strong> ${esc(e.brand)}<br><strong>Modelo:</strong> ${esc(e.model)}<br><strong>Instalación:</strong> ${esc(e.install)||'—'}<br><strong>Responsable:</strong> ${esc(e.responsible)||'—'}<br><strong>Área:</strong> ${esc(e.area)||'—'}</p>
+ <div class="bc-actions"><button class="btn" onclick="showSection('mantenimiento');closeModal('bcEqModal')">🔧 Mantenimientos</button><button class="btn secondary" onclick="showSection('documentos');closeModal('bcEqModal')">📄 Documentos</button><button class="btn secondary" onclick="showQr('${e.id}');closeModal('bcEqModal')">🔲 Ver QR</button></div>`;
+ document.getElementById('bcEqModal').classList.add('show');
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function showQr(id){
+ const e=equipmentV6.find(x=>x.id===id);if(!e)return;
+ document.getElementById('qrTitle').innerHTML=`<strong>${esc(e.name)}</strong><br>Serie: ${esc(e.serial)} · Código: ${esc(e.id)}`;
+ document.getElementById('qrCodeText').textContent=e.qr;
+ const box=document.getElementById('qrBox');box.innerHTML='';
+ const img=document.createElement('img');img.style.maxWidth='280px';img.style.width='100%';
+ if(e.id==='AUT-001'){
+   img.src='qr/AUT-001.png'; img.alt='QR AUT-001'; box.appendChild(img);
+ }else{
+   // For newly created equipment, generate a QR-like navigational code using a standards-friendly online endpoint.
+   // If offline, the unique code remains available for printing as text.
+   img.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(e.qr);
+   img.alt='Código QR '+e.id; img.onerror=()=>{box.innerHTML='<div style="padding:30px;text-align:center"><strong>'+esc(e.qr)+'</strong><br><small>Conecta el equipo a internet para visualizar el QR gráfico.</small></div>';};
+   box.appendChild(img);
+ }
+ document.getElementById('bcQrModal').classList.add('show');
+}
+function printQr(){
+ const title=document.getElementById('qrTitle').innerText, qr=document.getElementById('qrBox').innerHTML, code=document.getElementById('qrCodeText').innerText;
+ const w=window.open('','_blank'); if(!w)return;
+ w.document.write('<!doctype html><html><head><title>QR BioControl</title><style>body{font-family:Arial;text-align:center;padding:30px}img{max-width:280px}h1{font-size:22px}</style></head><body><h1>BioControl</h1><h2>'+esc(title)+'</h2>'+qr+'<p>'+esc(code)+'</p></body></html>');w.document.close();w.print();
+}
+function renderV6(){renderEquipment(); if(typeof renderDocuments==='function')renderDocuments(); if(typeof renderPhotos==='function')renderPhotos();}
+
+</script>
+
+<div id="bcQrModal" class="bc-modal"><div class="bc-modal-box">
+<div class="bc-actions" style="justify-content:space-between"><h2>🔲 Código QR</h2><button class="btn secondary" onclick="closeModal('bcQrModal')">Cerrar</button></div>
+<div id="qrTitle"></div><div id="qrBox" class="bc-qr"></div><div id="qrCodeText" class="bc-small"></div>
+<div class="bc-actions"><button class="btn" onclick="printQr()">🖨️ Imprimir QR</button></div>
+</div></div>
+<div id="bcEqModal" class="bc-modal"><div class="bc-modal-box">
+<div class="bc-actions" style="justify-content:space-between"><h2>📋 Ficha del equipo</h2><button class="btn secondary" onclick="closeModal('bcEqModal')">Cerrar</button></div>
+<div id="eqDetail"></div>
+</div></div>
+</body></html>
+<script>window.addEventListener('load',()=>setTimeout(renderV6,150));</script>
