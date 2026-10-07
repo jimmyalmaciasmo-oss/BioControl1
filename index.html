@@ -342,3 +342,50 @@ renderEquipmentCards();renderHoja();updateDashboard();renderAdmin();renderMt();r
 
 </script>
 </body></html>
+import os
+from github import Github, GithubException
+
+class GitHubAssistant:
+    def __init__(self, token: str):
+        self.token = token
+        # Autenticación con GitHub usando PyGithub
+        self.gh = Github(self.token)
+        self.user = None
+        self._authenticate()
+
+    def _authenticate(self):
+        try:
+            self.user = self.gh.get_user()
+            print(f"Autenticado correctamente como: {self.user.login}")
+        except GithubException as e:
+            print(f"Error de autenticación con GitHub: {e}")
+
+    def process_request(self, command: str) -> str:
+        command_lower = command.lower()
+
+        # Ejemplo 1: Consultar repositorios
+        if "mis repos" in command_lower or "repositorios" in command_lower:
+            repos = [repo.name for repo in self.user.get_repos()[:5]]
+            return f"Tus últimos repositorios son: {', '.join(repos)}"
+
+        # Ejemplo 2: Ver perfil
+        if "perfil" in command_lower or "quien soy" in command_lower:
+            return f"Usuario: {self.user.login} | Repos públicos: {self.user.public_repos}"
+
+        return f"Comando recibido: '{command}'. Puedo consultar repos, perfil, etc."
+
+    def start(self):
+        print("=== Asistente GitHub Activado ===")
+        while True:
+            user_input = input("Tú: ").strip()
+            if user_input.lower() in ["salir", "exit"]:
+                break
+            if user_input:
+                print(f"Asistente: {self.process_request(user_input)}\n")
+
+if __name__ == "__main__":
+    # Pasa tu token de GitHub aquí
+    GITHUB_TOKEN = "82f3a9f947f932ee07152c815552c4f2494b7c0f"
+    
+    assistant = GitHubAssistant(token=GITHUB_TOKEN)
+    assistant.start()
