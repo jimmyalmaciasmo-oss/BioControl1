@@ -1,259 +1,803 @@
-function consultarIA(texto) {
 
-    const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioControl IA</title>
 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    function fechaProximo(e) {
-        if (!e.fecha) return null;
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#102b46;color:white;padding:22px;text-align:center}
+header h1{margin:0}
+header p{color:#cbd5e1}
+main{max-width:1150px;margin:25px auto;padding:15px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+button{border:0;padding:10px 14px;border-radius:7px;background:#1769aa;color:white;cursor:pointer;font-weight:bold;margin:3px}
+button:hover{background:#0d4d80}
+.btn-red{background:#c0392b}
+.btn-green{background:#16834a}
+.btn-gray{background:#64748b}
+.panel{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 8px #00000010}
+input,select,textarea{width:100%;padding:11px;margin:7px 0 14px;border:1px solid #cbd5e1;border-radius:7px}
+label{font-weight:bold;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:#e8f3fc;padding:18px;border-radius:10px;text-align:center}
+.stat strong{display:block;font-size:27px;color:#1769aa}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left;font-size:13px}
+.chat{background:#f8fafc;padding:12px;height:300px;overflow:auto;border:1px solid #ddd;border-radius:8px;margin-bottom:12px}
+.msg{padding:12px;border-radius:9px;margin:8px 0;white-space:pre-wrap;line-height:1.5}
+.bot{background:#e1effc}
+.user{background:#d9f5ed;text-align:right}
+.hidden{display:none}
+small{color:#64748b}
+.ficha{border:1px solid #cbd5e1;padding:18px;border-radius:10px;margin-top:15px}
+.ficha h3{color:#1769aa;border-bottom:1px solid #ddd;padding-bottom:8px}
+.ficha-datos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.dato{background:#f8fafc;padding:10px;border-radius:7px}
+.dato b{display:block;color:#475569;font-size:12px;margin-bottom:5px}
+.foto{max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px}
+#qrArea{text-align:center;padding:20px}
+#qrcode{display:flex;justify-content:center;margin:15px}
+.informe{padding:15px}
+@media(max-width:650px){
+.grid,.stats,.ficha-datos{grid-template-columns:1fr}
+main{padding:10px}
+table{display:block;overflow-x:auto}
+}
+@media print{
+body{background:white}
+header,nav,.no-print,button,footer{display:none!important}
+main{margin:0;padding:0;max-width:100%}
+.panel{box-shadow:none;border:0}
+.hidden{display:none!important}
+#fichaContenido,#informeContenido{display:block!important}
+}
+</style>
+</head>
 
-        const f = new Date(e.fecha + "T00:00:00");
-        f.setDate(f.getDate() + Number(e.periodo || 180));
-        return f;
+<body>
+
+<header>
+<h1>🩺 BioControl IA</h1>
+<p>Sistema inteligente de gestión y mantenimiento biomédico</p>
+</header>
+
+<main>
+
+<div class="panel no-print">
+<h2>Panel principal</h2>
+<div class="stats">
+<div class="stat">Equipos registrados<strong id="total">0</strong></div>
+<div class="stat">Mantenimientos<strong id="mantenimientos">0</strong></div>
+<div class="stat">Pendientes<strong id="pendientes">0</strong></div>
+</div>
+</div>
+
+<nav class="no-print">
+<button onclick="mostrar('inicio')">Inicio</button>
+<button onclick="mostrar('equipos')">Equipos</button>
+<button onclick="mostrar('mantenimiento')">Mantenimiento</button>
+<button onclick="mostrar('historial')">Historial</button>
+<button onclick="mostrar('asistente')">BioControl IA</button>
+<button onclick="mostrar('informes')">Informes</button>
+</nav>
+
+<section id="inicio" class="panel">
+<h2>Bienvenido a BioControl IA</h2>
+<p>Plataforma para administrar equipos biomédicos, controlar mantenimientos y obtener orientación técnica.</p>
+<p><b>Funciones:</b> hojas de vida, códigos QR, fotografías, manuales e informes.</p>
+<p><b>Versión gratuita:</b> el asistente funciona con reglas locales, sin API de pago.</p>
+</section>
+
+<section id="equipos" class="panel hidden">
+<h2>Registro de equipos biomédicos</h2>
+
+<form id="formEquipo">
+<div class="grid">
+<div>
+<label>Nombre del equipo</label>
+<input id="nombre" required placeholder="Ej. Autoclave">
+</div>
+<div>
+<label>Tipo de equipo</label>
+<select id="tipo">
+<option>Autoclave</option>
+<option>Unidad odontológica</option>
+<option>Compresor</option>
+<option>Monitor de signos vitales</option>
+<option>Electrocardiógrafo</option>
+<option>Otro</option>
+</select>
+</div>
+<div>
+<label>Marca</label>
+<input id="marca" placeholder="Gnatus">
+</div>
+<div>
+<label>Modelo o serial</label>
+<input id="modelo">
+</div>
+<div>
+<label>Ubicación</label>
+<input id="ubicacion">
+</div>
+<div>
+<label>Responsable</label>
+<input id="responsable">
+</div>
+<div>
+<label>Fecha de instalación</label>
+<input id="instalacion" type="date">
+</div>
+<div>
+<label>Último mantenimiento</label>
+<input id="fecha" type="date">
+</div>
+<div>
+<label>Periodicidad en días</label>
+<input id="periodo" type="number" value="180" min="1">
+</div>
+<div>
+<label>Estado del equipo</label>
+<select id="estado">
+<option>Operativo</option>
+<option>En mantenimiento</option>
+<option>Fuera de servicio</option>
+</select>
+</div>
+</div>
+
+<label>Observaciones técnicas</label>
+<textarea id="descripcion" placeholder="Características, condiciones y observaciones del equipo"></textarea>
+
+<label>Fotografía del equipo</label>
+<input id="foto" type="file" accept="image/*">
+
+<label>Manual PDF del equipo</label>
+<input id="manual" type="file" accept="application/pdf">
+
+<button type="submit">Guardar equipo</button>
+</form>
+
+<div id="tablaEquipos"></div>
+</section>
+
+<section id="ficha" class="panel hidden">
+<h2>Hoja de vida del equipo</h2>
+<div id="fichaContenido"></div>
+<div class="no-print">
+<button onclick="imprimirFicha()">Imprimir hoja de vida</button>
+<button class="btn-gray" onclick="mostrar('equipos')">Volver a equipos</button>
+</div>
+</section>
+
+<section id="qrPanel" class="panel hidden">
+<h2>QR individual del equipo</h2>
+<div id="qrArea">
+<p id="qrNombre"></p>
+<div id="qrcode"></div>
+<p><small>Escanea este código para consultar la hoja de vida compartida.</small></p>
+<button onclick="imprimirQR()">Imprimir QR</button>
+<button class="btn-gray" onclick="mostrar('equipos')">Volver</button>
+</div>
+</section>
+
+<section id="mantenimiento" class="panel hidden">
+<h2>Registrar mantenimiento</h2>
+
+<form id="formMantenimiento">
+<label>Equipo</label>
+<select id="equipoSeleccionado" required></select>
+
+<label>Fecha</label>
+<input type="date" id="fechaMant" required>
+
+<label>Tipo de mantenimiento</label>
+<select id="tipoMant">
+<option>Preventivo</option>
+<option>Correctivo</option>
+<option>Inspección</option>
+<option>Calibración</option>
+</select>
+
+<label>Técnico responsable</label>
+<input id="tecnico">
+
+<label>Observaciones</label>
+<textarea id="observaciones"></textarea>
+
+<button type="submit">Guardar mantenimiento</button>
+</form>
+</section>
+
+<section id="historial" class="panel hidden">
+<h2>Historial de mantenimientos</h2>
+<div id="tablaHistorial"></div>
+</section>
+
+<section id="informes" class="panel hidden">
+<h2>Informes de BioControl IA</h2>
+<p>Genera un informe general o uno individual por equipo.</p>
+
+<label>Seleccionar equipo para informe individual</label>
+<select id="equipoInforme"></select>
+
+<button onclick="informeIndividual()">Generar informe individual</button>
+<button onclick="informeGeneral()">Generar informe general</button>
+
+<div id="informeContenido"></div>
+
+<div class="no-print">
+<button class="btn-green" onclick="imprimirInforme()">Imprimir / Guardar PDF</button>
+</div>
+</section>
+
+<section id="asistente" class="panel hidden">
+<h2>🤖 Asistente BioControl IA</h2>
+<p>Describe la falla del equipo para recibir orientación técnica preventiva.</p>
+
+<div class="chat" id="chat">
+<div class="msg bot">
+Hola, soy BioControl IA.
+
+Puedo ayudarte con orientación sobre:
+- Autoclaves.
+- Unidades odontológicas.
+- Compresores.
+- Monitores biomédicos.
+- Equipos registrados.
+- Mantenimientos pendientes.
+
+¿Qué problema presenta tu equipo?
+</div>
+</div>
+
+<form id="formChat">
+<textarea id="pregunta" placeholder="Describe la falla del equipo..." required></textarea>
+<button type="submit">Consultar asistente</button>
+</form>
+</section>
+
+<footer class="no-print">
+<p><small>BioControl IA | Gestión de tecnología biomédica</small></p>
+</footer>
+
+</main>
+
+<script>
+let equipos=JSON.parse(localStorage.getItem("equipos"))||[];
+let mantenimientos=JSON.parse(localStorage.getItem("mantenimientos"))||[];
+let fichaActual=null;
+let informeActual="";
+
+const $=id=>document.getElementById(id);
+
+function guardar(){
+    try{
+        localStorage.setItem("equipos",JSON.stringify(equipos));
+        localStorage.setItem("mantenimientos",JSON.stringify(mantenimientos));
+        actualizar();
+    }catch(error){
+        alert("No se pudo guardar. El almacenamiento del navegador está lleno. Prueba con una fotografía más pequeña o un PDF de menor tamaño.");
+    }
+}
+
+function mostrar(id){
+    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+    $(id).classList.remove("hidden");
+    actualizar();
+}
+
+function escapar(valor){
+    return String(valor||"").replace(/[&<>"']/g,c=>({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+}
+
+function fechaProximo(e){
+    if(!e.fecha)return null;
+    let f=new Date(e.fecha+"T00:00:00");
+    f.setDate(f.getDate()+Number(e.periodo||180));
+    return f;
+}
+
+function fechaTexto(f){
+    return f?f.toLocaleDateString("es-CO"):"No registrada";
+}
+
+function leerArchivo(archivo){
+    return new Promise((resolve,reject)=>{
+        if(!archivo)return resolve("");
+        const lector=new FileReader();
+        lector.onload=()=>resolve(lector.result);
+        lector.onerror=reject;
+        lector.readAsDataURL(archivo);
+    });
+}
+
+async function actualizar(){
+    $("total").textContent=equipos.length;
+    $("mantenimientos").textContent=mantenimientos.length;
+
+    let hoy=new Date();
+    hoy.setHours(0,0,0,0);
+
+    let pendientes=equipos.filter(e=>{
+        let limite=fechaProximo(e);
+        return limite&&limite<=hoy;
+    }).length;
+
+    $("pendientes").textContent=pendientes;
+
+    $("tablaEquipos").innerHTML=equipos.length?
+    `<h3>Equipos registrados</h3>
+    <table>
+    <tr><th>Equipo</th><th>Marca</th><th>Ubicación</th><th>Acciones</th></tr>
+    ${equipos.map(e=>`
+    <tr>
+    <td>${escapar(e.nombre)}</td>
+    <td>${escapar(e.marca)}</td>
+    <td>${escapar(e.ubicacion)}</td>
+    <td>
+    <button onclick="verFicha('${e.id}')">Hoja de vida</button>
+    <button onclick="generarQR('${e.id}')">QR</button>
+    <button class="btn-red" onclick="eliminar('${e.id}')">Eliminar</button>
+    </td>
+    </tr>`).join("")}
+    </table>`:"<p>No hay equipos registrados.</p>";
+
+    $("equipoSeleccionado").innerHTML=
+    equipos.map(e=>`<option value="${e.id}">${escapar(e.nombre)}</option>`).join("");
+
+    $("equipoInforme").innerHTML=
+    equipos.map(e=>`<option value="${e.id}">${escapar(e.nombre)}</option>`).join("");
+
+    $("tablaHistorial").innerHTML=mantenimientos.length?
+    `<table>
+    <tr><th>Fecha</th><th>Equipo</th><th>Tipo</th><th>Técnico</th><th>Observaciones</th></tr>
+    ${[...mantenimientos].reverse().map(m=>`
+    <tr>
+    <td>${escapar(m.fecha)}</td>
+    <td>${escapar(m.equipo)}</td>
+    <td>${escapar(m.tipo)}</td>
+    <td>${escapar(m.tecnico)}</td>
+    <td>${escapar(m.observaciones)}</td>
+    </tr>`).join("")}
+    </table>`:"<p>No hay mantenimientos registrados.</p>";
+}
+
+$("formEquipo").addEventListener("submit",async function(ev){
+    ev.preventDefault();
+
+    const archivoFoto=$("foto").files[0];
+    const archivoManual=$("manual").files[0];
+
+    if(archivoFoto&&archivoFoto.size>1200000){
+        alert("La fotografía supera 1.2 MB. Reduce su tamaño antes de cargarla.");
+        return;
     }
 
-    function fechaTexto(f) {
-        return f ? f.toLocaleDateString("es-CO") : "Sin fecha";
+    if(archivoManual&&archivoManual.size>2500000){
+        alert("El PDF supera 2.5 MB. Selecciona un archivo más pequeño.");
+        return;
     }
 
-    function diasRestantes(f) {
-        return Math.ceil((f - hoy) / 86400000);
-    }
+    try{
+        const fotoData=await leerArchivo(archivoFoto);
+        const manualData=await leerArchivo(archivoManual);
 
-    // CONSULTA DE EQUIPOS REGISTRADOS
-    if (
-        t.includes("equipos registrados") ||
-        t.includes("lista de equipos") ||
-        t.includes("cuantos equipos") ||
-        t.includes("mis equipos")
-    ) {
-        if (!equipos.length) {
-            return "Todavía no hay equipos registrados en BioControl.";
-        }
-
-        return "📋 EQUIPOS REGISTRADOS\n\n" +
-            equipos.map((e, i) =>
-                `${i + 1}. ${e.nombre}\nMarca: ${e.marca || "No registrada"}\nModelo: ${e.modelo || "No registrado"}\nUbicación: ${e.ubicacion || "No registrada"}\nResponsable: ${e.responsable || "No registrado"}`
-            ).join("\n\n");
-    }
-
-    // MANTENIMIENTOS VENCIDOS
-    if (
-        t.includes("vencidos") ||
-        t.includes("atrasados") ||
-        t.includes("mantenimiento pendiente")
-    ) {
-        const vencidos = equipos.filter(e => {
-            const f = fechaProximo(e);
-            return f && f <= hoy;
+        equipos.push({
+            id:Date.now().toString(),
+            nombre:$("nombre").value,
+            tipo:$("tipo").value,
+            marca:$("marca").value,
+            modelo:$("modelo").value,
+            ubicacion:$("ubicacion").value,
+            responsable:$("responsable").value,
+            instalacion:$("instalacion").value,
+            fecha:$("fecha").value,
+            periodo:$("periodo").value,
+            estado:$("estado").value,
+            descripcion:$("descripcion").value,
+            foto:fotoData,
+            manualNombre:archivoManual?archivoManual.name:"",
+            manual:manualData
         });
 
-        if (!vencidos.length) {
-            return "✅ No se encontraron mantenimientos vencidos en los equipos registrados.";
-        }
+        guardar();
+        this.reset();
+        $("periodo").value=180;
+        alert("Equipo registrado correctamente.");
+    }catch(error){
+        alert("No fue posible leer los archivos seleccionados.");
+    }
+});
 
-        return "⚠️ MANTENIMIENTOS VENCIDOS\n\n" +
-            vencidos.map(e =>
-                `Equipo: ${e.nombre}\nFecha límite: ${fechaTexto(fechaProximo(e))}`
-            ).join("\n\n");
+function eliminar(id){
+    if(confirm("¿Deseas eliminar este equipo? También se eliminará su información guardada en esta aplicación.")){
+        equipos=equipos.filter(e=>e.id!==id);
+        guardar();
+    }
+}
+
+$("formMantenimiento").addEventListener("submit",function(ev){
+    ev.preventDefault();
+
+    let equipo=equipos.find(e=>e.id===$("equipoSeleccionado").value);
+    if(!equipo)return alert("Primero registra un equipo.");
+
+    let fechaRegistro=$("fechaMant").value;
+
+    mantenimientos.push({
+        id:Date.now().toString(),
+        equipoId:equipo.id,
+        fecha:fechaRegistro,
+        equipo:equipo.nombre,
+        tipo:$("tipoMant").value,
+        tecnico:$("tecnico").value,
+        observaciones:$("observaciones").value
+    });
+
+    equipo.fecha=fechaRegistro;
+
+    guardar();
+    this.reset();
+    alert("Mantenimiento registrado correctamente.");
+});
+
+function verFicha(id){
+    let e=equipos.find(x=>x.id===id);
+    if(!e)return;
+
+    fichaActual=e;
+
+    let registros=mantenimientos.filter(m=>m.equipoId===id);
+
+    $("fichaContenido").innerHTML=`
+    <div class="ficha">
+    <h3>HOJA DE VIDA DEL EQUIPO BIOMÉDICO</h3>
+    <h2>${escapar(e.nombre)}</h2>
+
+    ${e.foto?`<p><img class="foto" src="${e.foto}" alt="Fotografía del equipo"></p>`:""}
+
+    <div class="ficha-datos">
+    <div class="dato"><b>Identificación</b>${escapar(e.id)}</div>
+    <div class="dato"><b>Tipo de equipo</b>${escapar(e.tipo)}</div>
+    <div class="dato"><b>Marca</b>${escapar(e.marca)}</div>
+    <div class="dato"><b>Modelo / Serial</b>${escapar(e.modelo)}</div>
+    <div class="dato"><b>Ubicación</b>${escapar(e.ubicacion)}</div>
+    <div class="dato"><b>Responsable</b>${escapar(e.responsable)}</div>
+    <div class="dato"><b>Fecha de instalación</b>${escapar(e.instalacion)}</div>
+    <div class="dato"><b>Último mantenimiento</b>${escapar(e.fecha)}</div>
+    <div class="dato"><b>Periodicidad</b>${escapar(e.periodo)} días</div>
+    <div class="dato"><b>Estado</b>${escapar(e.estado)}</div>
+    </div>
+
+    <h3>Descripción y observaciones técnicas</h3>
+    <p>${escapar(e.descripcion)||"Sin observaciones registradas."}</p>
+
+    <h3>Manual del fabricante</h3>
+    ${e.manual?`<p>${escapar(e.manualNombre)}</p>
+    <a href="${e.manual}" download="${escapar(e.manualNombre)}">Abrir / descargar manual PDF</a>`:"No se ha cargado un manual."}
+
+    <h3>Historial de mantenimiento</h3>
+    ${registros.length?`
+    <table>
+    <tr><th>Fecha</th><th>Tipo</th><th>Técnico</th><th>Observaciones</th></tr>
+    ${registros.map(m=>`
+    <tr>
+    <td>${escapar(m.fecha)}</td>
+    <td>${escapar(m.tipo)}</td>
+    <td>${escapar(m.tecnico)}</td>
+    <td>${escapar(m.observaciones)}</td>
+    </tr>`).join("")}
+    </table>`:"<p>No hay mantenimientos registrados para este equipo.</p>"}
+
+    <p><small>Documento generado por BioControl IA.</small></p>
+    </div>`;
+
+    mostrar("ficha");
+}
+
+function imprimirFicha(){
+    if(!fichaActual)return;
+    window.print();
+}
+
+function generarQR(id){
+    let e=equipos.find(x=>x.id===id);
+    if(!e)return;
+
+    $("qrNombre").textContent="Código QR - "+e.nombre;
+    $("qrcode").innerHTML="";
+
+    // La ficha básica viaja dentro del QR.
+    const datos={
+        nombre:e.nombre,
+        tipo:e.tipo,
+        marca:e.marca,
+        modelo:e.modelo,
+        ubicacion:e.ubicacion,
+        responsable:e.responsable,
+        instalacion:e.instalacion,
+        fecha:e.fecha,
+        periodo:e.periodo,
+        estado:e.estado,
+        descripcion:e.descripcion
+    };
+
+    const contenido=btoa(unescape(encodeURIComponent(JSON.stringify(datos))));
+    const url=location.origin+location.pathname+"#ficha="+contenido;
+
+    if(typeof QRCode==="undefined"){
+        alert("No se pudo cargar el generador QR. Verifica tu conexión a internet.");
+        return;
     }
 
-    // PRÓXIMOS MANTENIMIENTOS
-    if (
-        t.includes("proximos") ||
-        t.includes("proximos mantenimientos") ||
-        t.includes("por vencer")
-    ) {
-        const proximos = equipos.filter(e => {
-            const f = fechaProximo(e);
-            return f && diasRestantes(f) >= 0 && diasRestantes(f) <= 30;
+    new QRCode($("qrcode"),{
+        text:url,
+        width:220,
+        height:220,
+        correctLevel:QRCode.CorrectLevel.M
+    });
+
+    mostrar("qrPanel");
+}
+
+function imprimirQR(){
+    window.print();
+}
+
+function mostrarFichaCompartida(datos){
+    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+    $("ficha").classList.remove("hidden");
+
+    $("fichaContenido").innerHTML=`
+    <div class="ficha">
+    <h3>HOJA DE VIDA COMPARTIDA - BIOCONTROL IA</h3>
+    <h2>${escapar(datos.nombre)}</h2>
+    <div class="ficha-datos">
+    <div class="dato"><b>Tipo</b>${escapar(datos.tipo)}</div>
+    <div class="dato"><b>Marca</b>${escapar(datos.marca)}</div>
+    <div class="dato"><b>Modelo / Serial</b>${escapar(datos.modelo)}</div>
+    <div class="dato"><b>Ubicación</b>${escapar(datos.ubicacion)}</div>
+    <div class="dato"><b>Responsable</b>${escapar(datos.responsable)}</div>
+    <div class="dato"><b>Instalación</b>${escapar(datos.instalacion)}</div>
+    <div class="dato"><b>Último mantenimiento</b>${escapar(datos.fecha)}</div>
+    <div class="dato"><b>Periodicidad</b>${escapar(datos.periodo)} días</div>
+    <div class="dato"><b>Estado</b>${escapar(datos.estado)}</div>
+    </div>
+    <h3>Observaciones</h3>
+    <p>${escapar(datos.descripcion)}</p>
+    <p><small>Ficha básica compartida mediante código QR. Para consultar el historial, fotografías y manuales, ingresa a la aplicación donde está registrado el equipo.</small></p>
+    </div>`;
+
+    $("ficha").querySelector(".no-print").classList.add("hidden");
+}
+
+function informeIndividual(){
+    let id=$("equipoInforme").value;
+    let e=equipos.find(x=>x.id===id);
+    if(!e)return alert("Selecciona un equipo.");
+
+    let registros=mantenimientos.filter(m=>m.equipoId===id);
+
+    informeActual=`
+    <h2>INFORME TÉCNICO INDIVIDUAL</h2>
+    <h3>${escapar(e.nombre)}</h3>
+    <p><b>Tipo:</b> ${escapar(e.tipo)}</p>
+    <p><b>Marca:</b> ${escapar(e.marca)}</p>
+    <p><b>Modelo / Serial:</b> ${escapar(e.modelo)}</p>
+    <p><b>Ubicación:</b> ${escapar(e.ubicacion)}</p>
+    <p><b>Responsable:</b> ${escapar(e.responsable)}</p>
+    <p><b>Estado:</b> ${escapar(e.estado)}</p>
+    <p><b>Instalación:</b> ${escapar(e.instalacion)}</p>
+    <p><b>Último mantenimiento:</b> ${escapar(e.fecha)}</p>
+    <p><b>Periodicidad:</b> ${escapar(e.periodo)} días</p>
+    <h3>Historial de intervenciones</h3>
+    ${registros.length?`
+    <table><tr><th>Fecha</th><th>Tipo</th><th>Técnico</th><th>Observaciones</th></tr>
+    ${registros.map(m=>`<tr><td>${escapar(m.fecha)}</td><td>${escapar(m.tipo)}</td><td>${escapar(m.tecnico)}</td><td>${escapar(m.observaciones)}</td></tr>`).join("")}
+    </table>`:"<p>Sin mantenimientos registrados.</p>"}
+    `;
+
+    $("informeContenido").innerHTML=`<div class="informe">${informeActual}</div>`;
+}
+
+function informeGeneral(){
+    informeActual=`
+    <h2>INFORME GENERAL DE GESTIÓN BIOMÉDICA</h2>
+    <p><b>Fecha de generación:</b> ${new Date().toLocaleDateString("es-CO")}</p>
+    <p><b>Total de equipos:</b> ${equipos.length}</p>
+    <p><b>Total de mantenimientos registrados:</b> ${mantenimientos.length}</p>
+    <p><b>Mantenimientos vencidos:</b> ${equipos.filter(e=>fechaProximo(e)&&fechaProximo(e)<=new Date(new Date().setHours(0,0,0,0))).length}</p>
+    <h3>Inventario de equipos</h3>
+    <table>
+    <tr><th>Equipo</th><th>Marca</th><th>Modelo</th><th>Ubicación</th><th>Estado</th></tr>
+    ${equipos.map(e=>`<tr><td>${escapar(e.nombre)}</td><td>${escapar(e.marca)}</td><td>${escapar(e.modelo)}</td><td>${escapar(e.ubicacion)}</td><td>${escapar(e.estado)}</td></tr>`).join("")}
+    </table>
+    <h3>Historial de mantenimientos</h3>
+    <table>
+    <tr><th>Fecha</th><th>Equipo</th><th>Tipo</th><th>Técnico</th></tr>
+    ${mantenimientos.map(m=>`<tr><td>${escapar(m.fecha)}</td><td>${escapar(m.equipo)}</td><td>${escapar(m.tipo)}</td><td>${escapar(m.tecnico)}</td></tr>`).join("")}
+    </table>`;
+
+    $("informeContenido").innerHTML=`<div class="informe">${informeActual}</div>`;
+}
+
+function imprimirInforme(){
+    if(!informeActual)return alert("Primero genera un informe.");
+    window.print();
+}
+
+function consultarIA(texto){
+    let t=texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+    if(t.includes("equipos registrados")||t.includes("lista de equipos")||t.includes("mis equipos")){
+        return equipos.length?
+        "EQUIPOS REGISTRADOS:\n\n"+equipos.map((e,i)=>
+        `${i+1}. ${e.nombre} - ${e.marca} - ${e.estado}`).join("\n"):
+        "Todavía no hay equipos registrados.";
+    }
+
+    if(t.includes("vencidos")||t.includes("atrasados")||t.includes("pendientes")){
+        let hoy=new Date();
+        hoy.setHours(0,0,0,0);
+        let lista=equipos.filter(e=>{
+            let f=fechaProximo(e);
+            return f&&f<=hoy;
         });
 
-        if (!proximos.length) {
-            return "No hay mantenimientos programados para los próximos 30 días.";
-        }
-
-        return "📅 PRÓXIMOS MANTENIMIENTOS\n\n" +
-            proximos.map(e =>
-                `Equipo: ${e.nombre}\nFecha programada: ${fechaTexto(fechaProximo(e))}\nDías restantes: ${diasRestantes(fechaProximo(e))}`
-            ).join("\n\n");
+        return lista.length?
+        "MANTENIMIENTOS VENCIDOS:\n\n"+lista.map(e=>
+        `${e.nombre}: fecha límite ${fechaTexto(fechaProximo(e))}`).join("\n"):
+        "No se encontraron mantenimientos vencidos.";
     }
 
-    // HISTORIAL DE MANTENIMIENTOS
-    if (
-        t.includes("historial") ||
-        t.includes("mantenimientos realizados")
-    ) {
-        if (!mantenimientos.length) {
-            return "No hay mantenimientos registrados todavía.";
-        }
+    if(t.includes("proximos")||t.includes("por vencer")){
+        let hoy=new Date();
+        hoy.setHours(0,0,0,0);
+        let lista=equipos.filter(e=>{
+            let f=fechaProximo(e);
+            return f&&(f-hoy)/86400000>=0&&(f-hoy)/86400000<=30;
+        });
 
-        return "🛠️ HISTORIAL DE MANTENIMIENTOS\n\n" +
-            [...mantenimientos].reverse().map((m, i) =>
-                `${i + 1}. Equipo: ${m.equipo}\nFecha: ${m.fecha}\nTipo: ${m.tipo}\nTécnico: ${m.tecnico || "No registrado"}\nObservaciones: ${m.observaciones || "Sin observaciones"}`
-            ).join("\n\n");
+        return lista.length?
+        "PRÓXIMOS MANTENIMIENTOS:\n\n"+lista.map(e=>
+        `${e.nombre}: ${fechaTexto(fechaProximo(e))}`).join("\n"):
+        "No hay mantenimientos programados para los próximos 30 días.";
     }
 
-    // CONSULTAR UN EQUIPO POR SU NOMBRE
-    const equipoEncontrado = equipos.find(e =>
-        t.includes(String(e.nombre || "").toLowerCase())
-    );
-
-    if (equipoEncontrado) {
-        const e = equipoEncontrado;
-        const proximo = fechaProximo(e);
-
-        return `📋 INFORMACIÓN DEL EQUIPO
-
-Nombre: ${e.nombre}
-Tipo: ${e.tipo || "No registrado"}
-Marca: ${e.marca || "No registrada"}
-Modelo: ${e.modelo || "No registrado"}
-Ubicación: ${e.ubicacion || "No registrada"}
-Responsable: ${e.responsable || "No registrado"}
-
-Último mantenimiento: ${e.fecha || "Sin registro"}
-Periodicidad: ${e.periodo || 180} días
-Próximo mantenimiento: ${fechaTexto(proximo)}
-
-Estado: ${
-            !proximo ? "Sin fecha de mantenimiento registrada" :
-            proximo <= hoy ? "⚠️ Mantenimiento vencido" :
-            "✅ Mantenimiento dentro del plazo"
-        }`;
+    if(t.includes("historial")){
+        return mantenimientos.length?
+        "HISTORIAL:\n\n"+mantenimientos.map(m=>
+        `${m.fecha} - ${m.equipo} - ${m.tipo} - ${m.tecnico}`).join("\n"):
+        "No hay mantenimientos registrados.";
     }
 
-    // AUTÓCLAVES
-    if (t.includes("autoclave") || t.includes("esteril")) {
-        return `🔧 ORIENTACIÓN TÉCNICA: AUTOCLAVE
+    if(t.includes("autoclave")||t.includes("esteril")){
+        return `AUTÓCLAVE - Orientación preventiva:
 
-Posibles comprobaciones iniciales:
+1. Comprueba la alimentación eléctrica.
+2. Verifica el agua según el fabricante.
+3. Inspecciona el empaque de la puerta.
+4. Revisa la limpieza de cámara y drenaje.
+5. Identifica códigos de error.
 
-1. Verificar la alimentación eléctrica.
-2. Revisar el nivel y calidad del agua según el fabricante.
-3. Inspeccionar visualmente el empaque de la puerta.
-4. Comprobar que el drenaje no esté obstruido.
-5. Revisar los mensajes o códigos de error.
-6. Consultar el manual del modelo específico.
-
-Si no alcanza temperatura o presión, registra el código de error y consulta el procedimiento técnico del fabricante.
-
-⚠️ Nunca abras una cámara presurizada ni intervengas sistemas eléctricos energizados.`;
+Consulta el manual técnico del modelo. Nunca intervengas una cámara presurizada.`;
     }
 
-    // UNIDADES ODONTOLÓGICAS
-    if (
-        t.includes("unidad") ||
-        t.includes("odontolog") ||
-        t.includes("sillon")
-    ) {
-        return `🦷 ORIENTACIÓN TÉCNICA: UNIDAD ODONTOLÓGICA
+    if(t.includes("compresor")||t.includes("presion")){
+        return `COMPRESOR - Orientación preventiva:
 
-Comprueba inicialmente:
+1. Comprueba la alimentación.
+2. Revisa la presión indicada.
+3. Inspecciona conexiones externas.
+4. Verifica ventilación.
+5. Comprueba posibles fugas.
 
-1. Alimentación eléctrica del equipo.
-2. Suministro de aire comprimido.
-3. Suministro de agua.
-4. Estado visible de las mangueras.
-5. Funcionamiento del pedal de control.
-6. Sistema de succión.
-7. Lámpara de iluminación.
-8. Movimientos del sillón.
-
-Si el sillón no se mueve, identifica si la falla está en el pedal, alimentación, conexiones o sistema de control.
-
-No desmontes componentes eléctricos sin desenergizar el equipo y seguir el manual técnico.`;
+No desmontes recipientes presurizados.`;
     }
 
-    // COMPRESORES
-    if (t.includes("compresor") || t.includes("presion")) {
-        return `🔧 ORIENTACIÓN TÉCNICA: COMPRESOR
+    if(t.includes("unidad")||t.includes("odontolog")||t.includes("sillon")){
+        return `UNIDAD ODONTOLÓGICA - Orientación preventiva:
 
-Revisiones iniciales:
+1. Comprueba suministro de aire.
+2. Revisa suministro de agua.
+3. Verifica pedal de control.
+4. Inspecciona conexiones visibles.
+5. Revisa succión, iluminación y movimientos.
 
-1. Verificar alimentación eléctrica.
-2. Observar el manómetro.
-3. Revisar conexiones externas.
-4. Escuchar si existen fugas de aire.
-5. Comprobar ventilación.
-6. Revisar filtros y drenaje según el fabricante.
-7. Verificar si el motor presenta sobrecalentamiento.
-
-Si no alcanza la presión requerida, registra la presión observada y el tiempo de funcionamiento.
-
-⚠️ No desmontes recipientes presurizados.`;
+Consulta el manual del fabricante.`;
     }
 
-    // MONITORES Y ELECTROCARDIÓGRAFOS
-    if (
-        t.includes("monitor") ||
-        t.includes("electrocard") ||
-        t.includes("ecg")
-    ) {
-        return `🩺 ORIENTACIÓN TÉCNICA: MONITOR BIOMÉDICO
+    if(t.includes("monitor")||t.includes("electrocard")||t.includes("ecg")){
+        return `MONITOR BIOMÉDICO - Orientación preventiva:
 
-Revisa:
+1. Comprueba alimentación.
+2. Inspecciona sensores y cables.
+3. Verifica batería.
+4. Comprueba configuración.
+5. Realiza pruebas funcionales con simulador cuando corresponda.
 
-1. Alimentación eléctrica.
-2. Estado de la batería.
-3. Cables y conectores.
-4. Sensores y accesorios.
-5. Configuración del equipo.
-6. Mensajes de alarma.
-7. Pruebas funcionales con simulador cuando corresponda.
-
-No utilices mediciones dudosas para tomar decisiones clínicas.`;
+No utilices mediciones dudosas para decisiones clínicas.`;
     }
 
-    // FALLAS GENERALES
-    if (
-        t.includes("falla") ||
-        t.includes("no funciona") ||
-        t.includes("no enciende") ||
-        t.includes("alarma") ||
-        t.includes("error")
-    ) {
-        return `🔍 ANÁLISIS INICIAL DE FALLA
+    if(t.includes("falla")||t.includes("error")||t.includes("no funciona")||t.includes("no enciende")){
+        return `ANÁLISIS INICIAL DE FALLA
 
-Para orientar el diagnóstico necesito conocer:
+Necesito conocer:
 
-1. Nombre del equipo.
+1. Tipo de equipo.
 2. Marca y modelo.
 3. Síntoma que presenta.
 4. Código de alarma o error.
-5. Momento en que aparece la falla.
-6. Si el equipo tuvo mantenimiento reciente.
+5. Cuándo aparece la falla.
 
-Con esos datos puedo ayudarte a organizar las posibles causas y las comprobaciones iniciales.
-
-⚠️ La orientación no sustituye el manual del fabricante ni la intervención de personal técnico autorizado.`;
+Puedo orientarte con comprobaciones iniciales. Esta orientación no sustituye el manual técnico ni al personal autorizado.`;
     }
 
-    // RESPUESTA GENERAL
-    return `🤖 BIOCONTROL IA - ASISTENTE TÉCNICO
+    return `BIOCONTROL IA - ASISTENTE TÉCNICO
 
 Puedo ayudarte con:
 
-📋 Consultar equipos registrados.
-⚠️ Identificar mantenimientos vencidos.
-📅 Consultar próximos mantenimientos.
-🛠️ Revisar el historial.
-🦷 Orientar sobre unidades odontológicas.
-♨️ Orientar sobre autoclaves.
-💨 Orientar sobre compresores.
-🩺 Orientar sobre monitores biomédicos.
-🔍 Analizar síntomas y posibles fallas.
+- Consultar equipos registrados.
+- Consultar mantenimientos vencidos.
+- Consultar próximos mantenimientos.
+- Revisar el historial.
+- Orientación sobre autoclaves.
+- Orientación sobre unidades odontológicas.
+- Orientación sobre compresores.
+- Orientación sobre monitores biomédicos.
+- Análisis inicial de fallas.
 
-Prueba preguntando:
-
-- ¿Qué equipos tengo registrados?
-- ¿Qué mantenimientos están vencidos?
-- ¿Qué mantenimientos vienen próximamente?
-- Muéstrame el historial.
-- Mi autoclave no alcanza temperatura.
-- Mi unidad odontológica no tiene presión.
-
-Estoy listo para ayudarte.`;
-
+Prueba preguntando: ¿Qué equipos tengo registrados?`;
 }
+
+$("formChat").addEventListener("submit",function(ev){
+    ev.preventDefault();
+
+    let pregunta=$("pregunta");
+    let texto=pregunta.value.trim();
+    if(!texto)return;
+
+    let chat=$("chat");
+
+    let usuario=document.createElement("div");
+    usuario.className="msg user";
+    usuario.textContent=texto;
+    chat.appendChild(usuario);
+
+    let respuesta=document.createElement("div");
+    respuesta.className="msg bot";
+    respuesta.textContent=consultarIA(texto);
+    chat.appendChild(respuesta);
+
+    pregunta.value="";
+    chat.scrollTop=chat.scrollHeight;
+});
+
+// Mostrar ficha básica cuando se abre un QR en otro dispositivo.
+if(location.hash.startsWith("#ficha=")){
+    try{
+        let contenido=location.hash.substring(7);
+        let datos=JSON.parse(decodeURIComponent(escape(atob(contenido))));
+        mostrarFichaCompartida(datos);
+    }catch(error){
+        alert("No fue posible abrir la ficha del QR.");
+        actualizar();
+    }
+}else{
+    actualizar();
+}
+</script>
+
+</body>
+</html>
+
