@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BioControl | Gestión de equipos biomédicos</title>
-<script src="./config.js"></script>
+
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#64748b;--line:#dfe6ef;--primary:#0f766e;--primary2:#115e59;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--shadow:0 8px 25px rgba(15,23,42,.07)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--ink)}
@@ -374,7 +374,7 @@ renderEquipmentCards();renderHoja();updateDashboard();renderAdmin();renderMt();r
 <button class="ai-launcher" id="aiLauncher" type="button" aria-label="Abrir BioControl IA" onclick="toggleBioAI()">✨ BioControl IA</button>
 <aside class="ai-panel" id="aiPanel" aria-label="Asistente BioControl IA">
   <div class="ai-head">
-    <div class="ai-head-title"><div class="ai-avatar">🩺</div><div><h3>BioControl IA</h3><small>Asistente técnica biomédica</small></div></div>
+    <div class="ai-head-title"><div class="ai-avatar">🩺</div><div><h3>BioControl IA</h3><small>Asistente técnica biomédica · modo gratuito local</small></div></div>
     <button type="button" onclick="toggleBioAI(false)" aria-label="Cerrar asistente">✕</button>
   </div>
   <div class="ai-context" id="aiContext">Contexto: preparando información de los equipos…</div>
@@ -390,7 +390,7 @@ renderEquipmentCards();renderHoja();updateDashboard();renderAdmin();renderMt();r
     <textarea id="aiInput" rows="1" maxlength="3000" placeholder="Escribe tu consulta técnica…" aria-label="Escribe tu consulta"></textarea>
     <button class="ai-send" id="aiSend" type="submit">Enviar</button>
   </form>
-  <div class="ai-foot">La IA orienta; no sustituye el manual del fabricante ni al técnico autorizado.</div>
+  <div class="ai-foot">Modo gratuito local: respuestas guiadas por reglas y registros del navegador; no es un modelo generativo. No sustituye el manual ni al técnico autorizado.</div>
 </aside>
 <script>
 /* BioControl IA — el navegador envía solo datos técnicos necesarios, nunca fotos ni claves. */
@@ -435,7 +435,60 @@ function addBioAIMessage(role,text,extraClass=''){
   return el;
 }
 function aiQuickAsk(text){document.getElementById('aiInput').value=text;sendBioAI();}
-async function sendBioAI(){
+function bioAIRespond(question){
+  const q=question.toLowerCase();
+  const ctx=bioAIEquipmentContext();
+  const equip=ctx.equipos||[], maint=ctx.mantenimientos||[], cycles=ctx.ciclos||[];
+  const selectedId=typeof currentEquipmentId!=='undefined'?currentEquipmentId:null;
+  const selected=equip.find(e=>e.codigo===selectedId);
+  const matches=equip.filter(e=>(q.includes((e.codigo||'').toLowerCase()) ||
+    q.includes((e.nombre||'').toLowerCase()) ||
+    q.includes((e.marca||'').toLowerCase()) ||
+    q.includes((e.modelo||'').toLowerCase())));
+  const target=matches[0]||selected;
+  const fmtDate=v=>v?new Date(v+'T00:00:00').toLocaleDateString('es-CO'):'No registrada';
+  const related=(arr,id)=>arr.filter(x=>!x.equipo_codigo||x.equipo_codigo===id);
+  const intro='Soy BioControl IA, asistente local de BioControl. Trabajo sin API, sin suscripción y sin enviar tus datos a servicios externos. Mis respuestas se basan en reglas y en los registros disponibles en este navegador; no soy un modelo generativo avanzado.\n\n';
+  if(/hola|buenos días|buenas tardes|buenas noches|quién eres|quien eres/.test(q))
+    return intro+'Puedo ayudarte a consultar equipos, mantenimientos, ciclos de esterilización y ofrecer listas generales de verificación. Prueba: “resumen de equipos”, “mantenimientos vencidos” o escribe el código de un equipo.';
+  if(/resumen|cuántos equipos|cuantos equipos|lista de equipos|equipos registrados/.test(q)){
+    if(!equip.length)return intro+'Todavía no hay equipos registrados en este navegador.';
+    return intro+`RESUMEN DE EQUIPOS\nTotal registrados: ${equip.length}\n\n`+equip.map(e=>`• ${e.codigo} — ${e.nombre}\n  Marca/modelo: ${e.marca||'No registrado'} ${e.modelo||''}\n  Estado: ${e.estado||'No registrado'}\n  Ubicación: ${e.ubicacion||'No registrada'}\n  Próximo mantenimiento: ${fmtDate(e.proximo_mantenimiento)}`).join('\n\n');
+  }
+  if(/vencid|próxim|proxim|alerta|mantenimiento/.test(q) && !/preventivo|cómo hacer|como hacer|recomend/.test(q)){
+    const today=new Date();today.setHours(0,0,0,0);
+    const rows=equip.map(e=>{const d=e.proximo_mantenimiento?Math.ceil((new Date(e.proximo_mantenimiento+'T00:00:00')-today)/86400000):null;return {e,d};});
+    const overdue=rows.filter(x=>x.d===null||x.d<0), soon=rows.filter(x=>x.d!==null&&x.d>=0&&x.d<=30);
+    return intro+`ESTADO DE MANTENIMIENTOS\n🔴 Vencidos o sin fecha: ${overdue.length}\n🟡 Próximos (30 días): ${soon.length}\n🟢 Con más de 30 días: ${rows.length-overdue.length-soon.length}\n\n`+
+      [...overdue.map(x=>`• ${x.e.codigo} — ${x.e.nombre}: ${x.d===null?'sin fecha registrada':'vencido hace '+Math.abs(x.d)+' días'}`),
+       ...soon.map(x=>`• ${x.e.codigo} — ${x.e.nombre}: vence ${fmtDate(x.e.proximo_mantenimiento)} (en ${x.d} días)`)].join('\n')+
+      (overdue.length+soon.length?'':'\nNo hay mantenimientos vencidos ni próximos según las fechas registradas.');
+  }
+  if(/ciclo|esteriliz/.test(q)){
+    const list=target?related(cycles,target.codigo):cycles;
+    return intro+(target?`CICLOS DE ${target.codigo} — ${target.nombre}\n`:'HISTORIAL DE CICLOS\n')+
+      (list.length?list.slice(-15).reverse().map(c=>`• ${fmtDate(c.fecha)} — ${c.programa||'Programa no registrado'} — ${c.resultado||'Sin resultado'} — Responsable: ${c.responsable||'No registrado'}`).join('\n'):'No hay ciclos registrados para esta consulta.')+
+      '\n\nRecuerda: un ciclo registrado como exitoso no constituye por sí solo certificación de esterilidad. Verifica indicadores, parámetros y protocolo institucional.';
+  }
+  if(/historial|último mantenimiento|ultimo mantenimiento|registro de mantenimiento/.test(q)){
+    const list=target?related(maint,target.codigo):maint;
+    return intro+(target?`MANTENIMIENTOS DE ${target.codigo} — ${target.nombre}\n`:'HISTORIAL DE MANTENIMIENTOS\n')+
+      (list.length?list.slice(-15).reverse().map(m=>`• ${fmtDate(m.fecha)} — ${m.tipo||'Tipo no registrado'}\n  Técnico: ${m.tecnico||'No registrado'} · Próxima fecha: ${fmtDate(m.proxima_fecha)}\n  Observaciones: ${m.observaciones||'Sin observaciones'}`).join('\n\n'):'No hay mantenimientos registrados para esta consulta.');
+  }
+  if(/preventiv|lista de verific|checklist/.test(q)){
+    const kind=target?`${target.nombre} (${target.marca||''} ${target.modelo||''})`:'el equipo';
+    return intro+`ORIENTACIÓN GENERAL DE MANTENIMIENTO PREVENTIVO PARA ${kind.toUpperCase()}\n\n1. Identificar el equipo, código, fabricante y modelo.\n2. Consultar el manual y el plan de mantenimiento del fabricante.\n3. Revisar externamente limpieza, cables, conectores, carcasa y señales de daño.\n4. Verificar que las etiquetas, alarmas e indicadores funcionen según el procedimiento autorizado.\n5. Registrar hallazgos, fecha, responsable, repuestos y pruebas posteriores.\n6. Definir la próxima fecha según horas de uso, ciclos y recomendaciones del fabricante.\n\nEsta lista es orientativa: no reemplaza el procedimiento específico ni autoriza intervenciones internas.`;
+  }
+  if(/falla|no funciona|error|alarma|problema|diagn[oó]stic/.test(q)){
+    return intro+`ORIENTACIÓN SEGURA PARA ANALIZAR LA FALLA${target?`\nEquipo identificado: ${target.codigo} — ${target.nombre} (${target.marca||'marca no registrada'} ${target.modelo||''})`:''}\n\nPara orientarte sin asumir una causa, necesito:\n1. ¿Cuál es la marca y el modelo exactos?\n2. ¿Qué síntoma observas y cuándo aparece?\n3. ¿Hay código de error o alarma? Escríbelo exactamente.\n4. ¿Desde cuándo ocurre y qué cambió antes de la falla?\n\nSEGURIDAD: si hay riesgo eléctrico, fuga, sobrepresión, vapor, fallo de esterilización o alarma crítica, suspende el uso, identifica el equipo según el protocolo institucional y solicita revisión de un técnico competente. No anules alarmas ni abras equipos energizados.`;
+  }
+  if(target){
+    const m=related(maint,target.codigo), c=related(cycles,target.codigo);
+    return intro+`FICHA DEL EQUIPO\nCódigo: ${target.codigo}\nNombre: ${target.nombre}\nMarca: ${target.marca||'No registrada'}\nModelo: ${target.modelo||'No registrado'}\nSerie: ${target.serie||'No registrada'}\nEstado: ${target.estado||'No registrado'}\nUbicación: ${target.ubicacion||'No registrada'}\nResponsable: ${target.responsable||'No registrado'}\nÚltimo mantenimiento: ${fmtDate(target.ultimo_mantenimiento)}\nPróximo mantenimiento: ${fmtDate(target.proximo_mantenimiento)}\nRegistros relacionados: ${m.length} mantenimiento(s), ${c.length} ciclo(s).\n\n¿Quieres consultar su historial, sus ciclos o recibir una lista general de mantenimiento preventivo?`;
+  }
+  return intro+'Puedo responder consultas básicas con los datos registrados en BioControl. Para empezar, prueba una de estas consultas:\n• “Muéstrame un resumen de los equipos registrados”.\n• “¿Qué mantenimientos están vencidos o próximos?”.\n• “Consulta el historial de mantenimientos”.\n• “Muéstrame los ciclos de esterilización”.\n• “Dame una lista de verificaciones preventivas para una autoclave”.\n\nPara consultar un equipo concreto, incluye su código (por ejemplo AUT-001).';
+}
+function sendBioAI(){
   if(bioAISending)return;
   const input=document.getElementById('aiInput');
   const question=input.value.trim();
@@ -443,35 +496,21 @@ async function sendBioAI(){
   if(question.length>3000){addBioAIMessage('assistant','La consulta supera el límite de 3.000 caracteres.','error');return;}
   bioAISending=true;document.getElementById('aiSend').disabled=true;
   addBioAIMessage('user',question);input.value='';
-  const typing=addBioAIMessage('assistant','BioControl IA está analizando tu consulta…');
-  try{
-    refreshBioAIContext();
-    const apiBase=String(window.BIOCONTROL_API_BASE||'').replace(/\/$/,'');
-    const response=await fetch(apiBase+'/api/chat',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        message:question,
-        history:bioAIHistory.slice(-12),
-        context:bioAIEquipmentContext(),
-        selectedEquipmentId:typeof currentEquipmentId!=='undefined'?currentEquipmentId:null
-      })
-    });
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(data.error||`Error del servidor (${response.status}).`);
-    typing.remove();
-    const answer=String(data.answer||'No se recibió una respuesta.').trim();
-    addBioAIMessage('assistant',answer);
-    bioAIHistory.push({role:'user',content:question},{role:'assistant',content:answer});
-    if(bioAIHistory.length>16)bioAIHistory.splice(0,bioAIHistory.length-16);
-  }catch(err){
-    typing.remove();
-    const msg=err.message.includes('Failed to fetch')
-      ?'No fue posible conectar con el servidor. Verifica que BioControl esté iniciado con npm start y que el servidor esté activo.'
-      :err.message;
-    addBioAIMessage('assistant',msg,'error');
-  }finally{
-    bioAISending=false;document.getElementById('aiSend').disabled=false;input.focus();
-  }
+  const typing=addBioAIMessage('assistant','Revisando los registros locales…');
+  window.setTimeout(()=>{
+    try{
+      refreshBioAIContext();
+      const answer=bioAIRespond(question);
+      typing.remove();
+      addBioAIMessage('assistant',answer);
+    }catch(err){
+      typing.remove();
+      addBioAIMessage('assistant','No pude leer los registros locales. Actualiza la página y vuelve a intentarlo.','error');
+      console.error(err);
+    }finally{
+      bioAISending=false;document.getElementById('aiSend').disabled=false;input.focus();
+    }
+  },120);
 }
 document.getElementById('aiForm').addEventListener('submit',e=>{e.preventDefault();sendBioAI();});
 document.getElementById('aiInput').addEventListener('keydown',e=>{
